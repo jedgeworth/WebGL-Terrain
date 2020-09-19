@@ -29,7 +29,7 @@ Substitute `PROJECT-NAME` for your project name.
 Clone the repository
 
 ```sh
- git clone https://github.com/-waiting-on-url PROJECT-NAME
+ git clone https://github.com/jedgeworth/WebGL-Terrain.git PROJECT-NAME
  cd PROJECT-NAME
 ```
 

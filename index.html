@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>edge-webgl</title>
+    <title>Edge-WebGL</title>
     <!-- Twitter Card data -->
     <meta name="twitter:card" value="Edge-GL Demo Rendering">
     <meta name="Description" content="Rendering demo of Edge-GL."/>
     <!-- Open Graph data -->
     <meta property="og:title" content="Edge-GL Demo Rendering" />
     <meta property="og:type" content="article" />
-    <meta property="og:url" content="https://github.com/-waiting-on-url" />
+    <meta property="og:url" content="https://github.com/jedgeworth/WebGL-Terrain" />
     <meta property="og:image" content="https://jamesedgeworth.com/logo.svg" />
     <meta property="og:description" content="Rendering demo of Edge-GL." />
     <!-- Mobile header color for Chrome, Firefox OS and Opera -->
@@ -20,7 +20,79 @@
     <!-- Mobile header color for iOS Safari (supports black, black-translucent or default) -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700" rel="stylesheet">
+
+    <script id="base-vs" type="x-shader/x-vertex">
+        attribute highp vec3 aVertexNormal;
+        attribute highp vec3 aVertexPosition;
+        attribute highp vec2 aTextureCoord;
+
+        uniform highp mat4 uNormalMatrix;
+        uniform highp mat4 uMVMatrix;
+        uniform highp mat4 uPMatrix;
+
+        varying highp vec2 vTextureCoord;
+        varying highp vec3 vLighting;
+
+        void main(void) {
+          gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+          vTextureCoord = aTextureCoord;
+
+          // Apply lighting effect
+          highp vec3 ambientLight = vec3(0.6, 0.6, 0.6);
+          highp vec3 directionalLightColor = vec3(0.5, 0.5, 0.75);
+          highp vec3 directionalVector = vec3(0.85, 0.8, 0.75);
+
+          highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+
+          highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+          vLighting = ambientLight + (directionalLightColor * directional);
+        }
+      </script>
+
+      <script id="base-fs" type="x-shader/x-fragment">
+        varying highp vec2 vTextureCoord;
+        varying highp vec3 vLighting;
+
+        uniform sampler2D uSampler;
+
+        void main(void) {
+          highp vec4 texelColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+
+          gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+        }
+      </script>
+
+
+      <script id="line-vs" type="x-shader/x-vertex">
+        attribute highp vec3 aVertexPosition;
+        attribute highp vec3 aVertexColor;
+
+        uniform highp mat4 uMVMatrix;
+        uniform highp mat4 uPMatrix;
+
+        varying highp vec3 vColor;
+
+        void main(void) {
+          gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+          vColor = aVertexColor;
+        }
+      </script>
+
+      <script id="line-fs" type="x-shader/x-fragment">
+        varying highp vec3 vColor;
+
+        void main(void) {
+          gl_FragColor = vec4(vColor.rgb, 1);
+        }
+      </script>
+
 </head>
     <body>
+        <div id="debug"></div>
+        <div id="cameraDebug"></div>
+        <canvas id="glcanvas" width="1000" height="1000">
+            Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+        </canvas>
     </body>
 </html>
