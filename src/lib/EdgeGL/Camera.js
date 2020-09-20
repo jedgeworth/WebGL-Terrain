@@ -5,6 +5,8 @@
  *
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
+
+ const Sylvester = require('sylvester-es6/src/Sylvester');
 module.exports = class Camera {
 
     constructor() {
@@ -24,92 +26,92 @@ module.exports = class Camera {
      * Turn camera left.
      */
     yawLeft() {
-        yaw += TURNSPEED;
+        this.yaw += this.TURNSPEED;
     }
 
     /**
      * Turn camera right.
      */
     yawRight() {
-        yaw -= TURNSPEED;
+        this.yaw -= this.TURNSPEED;
     }
 
     /**
      * Angle camera upwards.
      */
     pitchUp() {
-        pitch -= TURNSPEED;
+        this.pitch -= this.TURNSPEED;
     }
 
     /**
      * Angle camera downwards.
      */
     pitchDown() {
-        pitch += TURNSPEED;
+        this.pitch += this.TURNSPEED;
     }
 
     /**
      * Move camera left (strafe).
      */
     moveLeft() {
-        xPos -= Math.sin( (yaw + 90) * PIOVER180 ) * WALKSPEED;
-        zPos -= Math.cos( (yaw + 90) * PIOVER180 ) * WALKSPEED;
+        this.xPos -= Math.sin( (this.yaw + 90) * this.PIOVER180 ) * this.WALKSPEED;
+        this.zPos -= Math.cos( (this.yaw + 90) * this.PIOVER180 ) * this.WALKSPEED;
     }
 
     /**
      * Move camera right (strafe).
      */
     moveRight() {
-        xPos += Math.sin( (yaw + 90) * PIOVER180 ) * WALKSPEED;
-        zPos += Math.cos( (yaw + 90) * PIOVER180 ) * WALKSPEED;
+        this.xPos += Math.sin( (this.yaw + 90) * this.PIOVER180 ) * this.WALKSPEED;
+        this.zPos += Math.cos( (this.yaw + 90) * this.PIOVER180 ) * this.WALKSPEED;
     }
 
     /**
      * Move camera forward.
      */
     moveForward() {
-        xPos -= Math.sin( yaw * PIOVER180 ) * WALKSPEED;
-        zPos -= Math.cos( yaw * PIOVER180 ) * WALKSPEED;
+        this.xPos -= Math.sin( this.yaw * this.PIOVER180 ) * this.WALKSPEED;
+        this.zPos -= Math.cos( this.yaw * this.PIOVER180 ) * this.WALKSPEED;
     }
 
     /**
      * Move camera backward.
      */
     moveBackward() {
-        xPos += Math.sin( yaw * PIOVER180 ) * WALKSPEED;
-        zPos += Math.cos( yaw * PIOVER180 ) * WALKSPEED;
+        this.xPos += Math.sin( this.yaw * this.PIOVER180 ) * this.WALKSPEED;
+        this.zPos += Math.cos( this.yaw * this.PIOVER180 ) * this.WALKSPEED;
     }
 
     /**
      * Move camera upwards (fly).
      */
     moveUp() {
-        yPos += WALKSPEED;
+        this.yPos += this.WALKSPEED;
     }
 
     /**
      * Move camera downward.
      */
     moveDown() {
-        yPos -= WALKSPEED;
+        this.yPos -= this.WALKSPEED;
     }
 
     /**
      * Called per frame to update the scene with the current camera position/rotation.
      */
-    update() {
+    update(matrices) {
         let xTrans, yTrans, zTrans;
 
-        xTrans = -xPos;
-        yTrans = -yPos;
-        zTrans = -zPos;
+        xTrans = -this.xPos;
+        yTrans = -this.yPos;
+        zTrans = -this.zPos;
 
-        let yRot = 360.0 - yaw;
+        let yRot = 360.0 - this.yaw;
 
-        mvRotate(pitch, [TURNSPEED, 0, 0]);
-        mvRotate(yRot, [0, TURNSPEED, 0]);
+        matrices.mvRotate(this.pitch, [this.TURNSPEED, 0, 0]);
+        matrices.mvRotate(this.yRot, [0, this.TURNSPEED, 0]);
 
-        mvTranslate([xTrans, yTrans, zTrans]);
+        matrices.mvTranslate([xTrans, yTrans, zTrans]);
     }
 
     /**
@@ -117,12 +119,14 @@ module.exports = class Camera {
      * @param {*} debugElementId ID of the target HTML element to display the text.
      */
     debug(debugElementId) {
-        let text = `pitch: ${pitch}`;
-        text += `yaw: ${yaw}`;
-        text += `x: ${xPos}`;
-        text += `y: ${yPos}`;
-        text += `z: ${zPos}`;
+        let text = `pitch: ${this.pitch}`;
+        text += `yaw: ${this.yaw}`;
+        text += `x: ${this.xPos}`;
+        text += `y: ${this.yPos}`;
+        text += `z: ${this.zPos}`;
 
-        document.getElementById(debugElementId).innerHTML = text;
+        console.log(text);
+
+        //document.getElementById(debugElementId).innerHTML = text;
     }
 };

@@ -53,7 +53,6 @@ module.exports = class Shader {
         let vertexShaderSource = this.readSourceFromElement(scriptElementId + "-vs");
         this.vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
 
-
         if (vertexShaderSource.indexOf("aVertexColor") > 0) {
             this.hasVertexColorAttribute = true;
         }
