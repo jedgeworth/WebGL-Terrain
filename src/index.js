@@ -12,6 +12,9 @@ require('./styles/index.scss');
 const AppRegistry = require('./lib/EdgeGL/AppRegistry');
 const appRegistry = new AppRegistry();
 
+const Matrices = require('./lib/EdgeGL/Matrices');
+const matrices = new Matrices();
+
 const Camera = require('./lib/EdgeGL/Camera');
 const Shader = require('./lib/EdgeGL/Shader');
 const SceneObject = require('./lib/EdgeGL/SceneObject');
@@ -19,6 +22,7 @@ const SceneObject = require('./lib/EdgeGL/SceneObject');
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
 
+const Sylvester = require('sylvester-es6/src/Sylvester');
 
 /**
  * Once DOM is ready, begin.
@@ -168,6 +172,8 @@ function handleKeyUp(event) {
 }
 
 function handleKeys() {
+
+    console.log(currentlyPressedKeys);
     if (currentlyPressedKeys[37]) {
       // Left cursor key
       appRegistry.camera.yawLeft();
@@ -266,16 +272,16 @@ function startGlContext() {
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    perspectiveMatrix = makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
+    const perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
 
-    loadIdentity();
-    appRegistry.camera.update();
+    matrices.loadIdentity();
+    appRegistry.camera.update(matrices);
 
     appRegistry.shaders.line.use();
-    appRegistry.meshes.worldOrigin.render(appRegistry.shaders.line);
+    appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
-    appRegistry.meshes.floor.render(appRegistry.shaders.base);
+    appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
@@ -306,3 +312,4 @@ function drawDebug() {
 
     appRegistry.camera.debug();
 }
+

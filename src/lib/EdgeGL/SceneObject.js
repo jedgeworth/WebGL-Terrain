@@ -13,7 +13,7 @@
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
 
- const Vector = require('sylvester/lib/node-sylvester/vector');
+ const Sylvester = require('sylvester-es6/src/Sylvester');
 
  module.exports = class SceneObject {
 
@@ -33,7 +33,7 @@
 
         this.glTexture = null;
 
-        this.position = Vector.create([0.0, 0.0, 0.0]);
+        this.position = new Sylvester.Vector([0.0, 0.0, 0.0]);
         this.pitch = 0.0;
         this.yaw = 0.0;
         this.roll = 0.0;
@@ -156,14 +156,14 @@
      * Called each frame during the game loop to render the scene object.
      * @param {*} shaderProgram EdgeGL/Shader object to use for rendering.
      */
-    render(shaderProgram) {
+    render(shaderProgram, matrices) {
 
-        mvPushMatrix();
+        matrices.mvPushMatrix();
 
-        mvTranslate(this.position.elements);
-        mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
+        matrices.mvTranslate(this.position.elements);
+        matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
-        shaderProgram.setMatrixUniforms(perspectiveMatrix, mvMatrix);
+        shaderProgram.setMatrixUniforms(matrices.perspectiveMatrix, matrices.mvMatrix);
         shaderProgram.enableAttributes();
 
         // Vertices
@@ -204,7 +204,7 @@
             this.gl.drawArrays(this.renderMode, 0, this.numItems);
         }
 
-        mvPopMatrix();
+        matrices.mvPopMatrix();
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
