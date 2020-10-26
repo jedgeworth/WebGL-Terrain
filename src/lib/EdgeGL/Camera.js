@@ -26,6 +26,7 @@ module.exports = class Camera {
      * Turn camera left.
      */
     yawLeft() {
+
         this.yaw += this.TURNSPEED;
     }
 
@@ -109,7 +110,7 @@ module.exports = class Camera {
         let yRot = 360.0 - this.yaw;
 
         matrices.mvRotate(this.pitch, [this.TURNSPEED, 0, 0]);
-        matrices.mvRotate(this.yRot, [0, this.TURNSPEED, 0]);
+        matrices.mvRotate(yRot, [0, this.TURNSPEED, 0]);
 
         matrices.mvTranslate([xTrans, yTrans, zTrans]);
     }
@@ -125,8 +126,6 @@ module.exports = class Camera {
         text += `y: ${this.yPos}`;
         text += `z: ${this.zPos}`;
 
-        console.log(text);
-
-        //document.getElementById(debugElementId).innerHTML = text;
+        document.getElementById(debugElementId).innerHTML = text;
     }
 };

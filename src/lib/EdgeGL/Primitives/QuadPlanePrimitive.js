@@ -17,6 +17,7 @@ module.exports = class QuadPlanePrimitive {
             -100.0, 0.0,  100.0,    //TL
         ];
 
+
         this.normals = [
             // Bottom
             0.0, -1.0,  0.0,

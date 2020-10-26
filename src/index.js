@@ -116,7 +116,8 @@ function initBuffers(gl) {
 
     const floorObject = new SceneObject(gl);
     floorObject.setPrimitive(new QuadPlanePrimitive(gl));
-    floorObject.setTexture(appRegistry.glTextures.floor);
+    floorObject.setTexture(appRegistry.glTextures.grass);
+
     appRegistry.sceneObjects.floor = floorObject;
 
     // Example of a more complicated object (TODO: port the object loader across)
@@ -173,7 +174,6 @@ function handleKeyUp(event) {
 
 function handleKeys() {
 
-    console.log(currentlyPressedKeys);
     if (currentlyPressedKeys[37]) {
       // Left cursor key
       appRegistry.camera.yawLeft();
@@ -240,7 +240,7 @@ function startGlContext() {
     appRegistry.camera = new Camera();
 
     if (gl !== null) {
-        gl.clearColor(24/255, 43/255, 60/255, 1.0); // Cornflower blue
+        gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
         gl.clearDepth(1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
@@ -254,7 +254,7 @@ function startGlContext() {
 
         initBuffers(gl);
 
-        setInterval(drawScene(gl), frameRate);
+        setInterval(() => { drawScene(gl) }, frameRate);
 
         document.onkeydown = handleKeyDown;
         document.onkeyup = handleKeyUp;
@@ -272,9 +272,8 @@ function startGlContext() {
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
-
     matrices.loadIdentity();
+    matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
     appRegistry.camera.update(matrices);
 
     appRegistry.shaders.line.use();
@@ -310,6 +309,10 @@ function drawDebug() {
     //text += `<h5>Tank</h5>${appRegistry.meshes.tank.debug()}`;
     //document.getElementById("debug").innerHTML = text;
 
-    appRegistry.camera.debug();
+    // let text = '';
+    // text += `<h5>Origin:</h5>${appRegistry.sceneObjects.worldOrigin.debug()}`;
+    // document.getElementById("debug").innerHTML = text;
+
+    //appRegistry.camera.debug('debug');
 }
 

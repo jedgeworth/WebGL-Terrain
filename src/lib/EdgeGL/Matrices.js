@@ -17,7 +17,6 @@ module.exports = class Matrices {
     constructor() {
         this.mvMatrix = Sylvester.Matrix.I(4);
         this.perspectiveMatrix = Sylvester.Matrix.I(4);
-
         this.mvMatrixStack = [];
     }
 
