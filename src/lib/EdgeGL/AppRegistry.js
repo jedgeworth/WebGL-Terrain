@@ -10,9 +10,11 @@ module.exports = class AppRegistry{
     constructor() {
         this.models = {};
         this.textureImages = {};
+        this.heightmaps = {};
         this.glTextures = {};
         this.shaders = {};
         this.sceneObjects = {};
+        this.terrains = {};
         this.nodePaths = {};
         this.camera = null;
         this.lastUpdateTime = 0;

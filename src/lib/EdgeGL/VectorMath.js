@@ -6,6 +6,8 @@
    * @author James Edgeworth (https://jamesedgeworth.com)
    */
 
+  const Vector3 = require('./types/Vector3');
+
   /**
    * Calculates which direction a vector is heading in.
    * @param  {[type]} v [description]
@@ -58,7 +60,85 @@ function getVelocity(destination, position, speed) {
     velocity = velocity.toUnitVector();
 
     return velocity.multiply(speed);
+}
 
+
+/**
+ * Noramlise a single value.
+ * @param {*} value Value to normalize.
+ * @param {*} low  Low value in range.
+ * @param {*} high High value in range.
+ */
+function normalize(value, low, high) {
+    return (value - low) / (high - low);
+}
+
+
+/**
+ * Normalise position coordinates in an object.
+ * Acts on the object - does not return.
+ *
+ * @param {*} v A "Vector*" object containing x, y, z coordinates.
+ */
+function normalizePosition(v) {
+    const length = Math.sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+
+    v.x /= length;
+    v.y /= length;
+    v.z /= length;
+}
+
+function zeroPosition(v)
+{
+    v.x = 0;
+    v.y = 0;
+    v.z = 0;
+}
+
+/**
+ *
+ * Creates a Vector3 with the cross product of two "Vector*"'s.
+ * @param {*} v1 First vector.
+ * @param {*} v2 Second vector.
+ */
+function crossVector(v1, v2) {
+    result = new Vector3();
+
+    result.x = (v1.x * v2.z) - (v1.z * v2.y);
+    result.y = (v1.z * v2.x) - (v1.x * v2.z);
+    result.z = (v1.x * v2.y) - (v1.y * v2.x);
+
+    return result;
+}
+
+function addVector(v1, v2) {
+    result = new Vector3();
+
+    result.x = v1.x + v2.x;
+    result.y = v1.y + v2.y;
+    result.z = v1.z + v2.z;
+
+    return result;
+}
+
+function subtractVector(v1, v2) {
+    result = new Vector3();
+
+    result.x = v1.x - v2.x;
+    result.y = v1.y - v2.y;
+    result.z = v1.z - v2.z;
+
+    return result;
+}
+
+function divideVector(v, value) {
+    result = new Vector3();
+
+    result.x = v.x / value;
+    result.y = v.y / value;
+    result.z = v.z / value;
+
+    return result;
 }
 
 module.exports = {
@@ -67,4 +147,12 @@ module.exports = {
     pointEqualToPoint,
     radToDeg,
     getVelocity,
+
+    normalize,
+    normalizePosition,
+    zeroPosition,
+    crossVector,
+    addVector,
+    subtractVector,
+    divideVector,
 };

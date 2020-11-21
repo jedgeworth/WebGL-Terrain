@@ -196,7 +196,6 @@
             //this.gl.disableVertexAttribArray(shaderProgram.textureCoordAttribute);
         }
 
-
         if (this.indexBuffer) {
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
             this.gl.drawElements(this.renderMode, this.numItems, this.gl.UNSIGNED_SHORT, 0);

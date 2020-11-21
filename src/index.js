@@ -22,6 +22,9 @@ const SceneObject = require('./lib/EdgeGL/SceneObject');
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
 
+const Heightmap = require('./lib/EdgeGL/Heightmap');
+const Terrain = require('./lib/EdgeGL/Terrain');
+
 const Sylvester = require('sylvester-es6/src/Sylvester');
 
 /**
@@ -63,8 +66,14 @@ function loadTextures() {
  */
 function loadModels() {
 
-    appRegistry.modelsLoaded = true;
-    assetsLoaded();
+    // Load Heightmap
+    const heightmap = new Heightmap();
+    heightmap.initWithFile(require('./assets/terrain/sample.png'), () => {
+        appRegistry.heightmaps.main = heightmap;
+        appRegistry.modelsLoaded = true;
+
+        assetsLoaded();
+    });
 }
 
 /**
@@ -119,6 +128,15 @@ function initBuffers(gl) {
     floorObject.setTexture(appRegistry.glTextures.grass);
 
     appRegistry.sceneObjects.floor = floorObject;
+
+    const terrain = new Terrain();
+    terrain.initWithHeightmap(appRegistry.heightmaps.main);
+
+    const terrainObject = new SceneObject(gl);
+    terrain.populateSceneObject(terrainObject);
+    terrainObject.setRenderMode(gl.GL_TRIANGLE_STRIP);
+    terrainObject.setTexture(appRegistry.glTextures.grass);
+    appRegistry.sceneObjects.terrain = terrainObject;
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -276,11 +294,14 @@ function startGlContext() {
     matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
     appRegistry.camera.update(matrices);
 
-    appRegistry.shaders.line.use();
-    appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
+    //appRegistry.shaders.line.use();
+    //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
-    appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
+    //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
+
+    appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
+
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
