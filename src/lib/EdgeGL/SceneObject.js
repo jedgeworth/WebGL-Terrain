@@ -41,6 +41,7 @@
         this.flipYaw = 0.0;
 
         this.renderMode = this.gl.TRIANGLES;
+        this.originalRenderMode = this.renderMode;
     }
 
     /**
@@ -97,7 +98,7 @@
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
 
-        // If indices are set, we always use it's length as the numItems.
+        // If indices are set, we always use its length as the numItems.
         this.numItems = indices.length;
     }
 
@@ -115,6 +116,23 @@
      */
     setRenderMode(renderMode) {
         this.renderMode = renderMode;
+    }
+
+    /**
+     * Sets a render mode. Used for debugging.
+     * @param {*} newRenderMode New render mode to set (probably gl.LINES)
+     */
+    setRenderModeOverride(newRenderMode) {
+        this.originalRenderMode = this.renderMode;
+
+        this.renderMode = newRenderMode;
+    }
+
+    /**
+     * Disables the previously set render mode override.
+     */
+    disableRenderModeOverride() {
+        this.renderMode = this.originalRenderMode;
     }
 
     /**

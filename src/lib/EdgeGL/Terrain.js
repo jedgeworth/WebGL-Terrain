@@ -75,7 +75,7 @@ module.exports = class Terrain {
         const tileStepX = this.textureTiling / this.heightmap.width;
         const tileStepZ = this.textureTiling / this.heightmap.height;
 
-        this.verts = [];
+        this.verts = new Array(this.heightmap.width * this.heightmap.height);
 
         for (let x = 0; x < this.heightmap.width; x += 1) {
             for (let z = 0; z < this.heightmap.height; z += 1) {
@@ -99,7 +99,7 @@ module.exports = class Terrain {
                 vert.s = x * tileStepX;
                 vert.t = z * tileStepZ;
 
-                this.verts.push(vert);
+                this.verts[(x * this.heightmap.width) + z] = vert;
             }
         }
     }
@@ -122,16 +122,20 @@ module.exports = class Terrain {
     createIndexes() {
         let i = 0;
 
-        this.indices = [];
+        const numStrips = this.heightmap.height - 1;
+        const numDegens = 2 * (numStrips - 1);
+        const vertsPerStrip = 2 * this.heightmap.width;
 
-        for (let z = 0; z < this.heightmap.height; z += 1) {
+        this.indices = new Uint16Array((vertsPerStrip * numStrips) + numDegens);
+
+        for (let z = 0; z < numStrips; z++) {
 
             // Degenerate triangle
             if (z > 0) {
                 this.indices[i++] = (z * this.heightmap.width);
             }
 
-            for (let x = 0; x < this.heightmap.width; x += 1) {
+            for (let x = 0; x < this.heightmap.width; x++) {
                 this.indices[i++] = x + ( z      * this.heightmap.width);
                 this.indices[i++] = x + ((z + 1) * this.heightmap.width);
             }
@@ -141,6 +145,8 @@ module.exports = class Terrain {
                 this.indices[i++] = (((z + 1) * this.heightmap.width) + (this.heightmap.width - 1));
             }
         }
+
+
     }
 
 

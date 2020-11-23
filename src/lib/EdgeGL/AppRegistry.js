@@ -21,6 +21,10 @@ module.exports = class AppRegistry{
 
         this.modelsLoaded = false;
         this.texturesLoaded = false;
+
+        this.options = {
+            isRenderModeLines: false
+        };
     }
 
 }

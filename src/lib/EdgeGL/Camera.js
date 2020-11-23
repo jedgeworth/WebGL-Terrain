@@ -98,6 +98,19 @@ module.exports = class Camera {
     }
 
     /**
+     * Sets the movement speed.
+     *
+     * @param {*} newSpeed
+     */
+    setWalkSpeed(newSpeed) {
+        this.WALKSPEED = newSpeed;
+    }
+
+    setTurnSpeed(newSpeed) {
+        this.TURNSPEED = newSpeed;
+    }
+
+    /**
      * Called per frame to update the scene with the current camera position/rotation.
      */
     update(matrices) {

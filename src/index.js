@@ -27,6 +27,7 @@ const Terrain = require('./lib/EdgeGL/Terrain');
 
 const Sylvester = require('sylvester-es6/src/Sylvester');
 
+
 /**
  * Once DOM is ready, begin.
  */
@@ -36,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadModels();
 
 });
+
 
 /**
  * Load any expected image assets.
@@ -68,7 +70,7 @@ function loadModels() {
 
     // Load Heightmap
     const heightmap = new Heightmap();
-    heightmap.initWithFile(require('./assets/terrain/sample.png'), () => {
+    heightmap.initWithFile(require('./assets/terrain/testheightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.modelsLoaded = true;
 
@@ -134,7 +136,7 @@ function initBuffers(gl) {
 
     const terrainObject = new SceneObject(gl);
     terrain.populateSceneObject(terrainObject);
-    terrainObject.setRenderMode(gl.GL_TRIANGLE_STRIP);
+    terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
     terrainObject.setTexture(appRegistry.glTextures.grass);
     appRegistry.sceneObjects.terrain = terrainObject;
 
@@ -276,6 +278,30 @@ function startGlContext() {
 
         document.onkeydown = handleKeyDown;
         document.onkeyup = handleKeyUp;
+
+        // Prevent certain keys from scrolling the page.
+        window.addEventListener("keydown", function(e) {
+            // space and arrow keys
+            if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                e.preventDefault();
+            }
+        }, false);
+
+        // If render mode lines checkbox checked, tell all scene objects to render as lines.
+        document.getElementById('isRenderModeLines').addEventListener('change', (event) => {
+            appRegistry.options.isRenderModeLines = event.target.checked;
+
+            Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
+
+                if (appRegistry.options.isRenderModeLines) {
+                    sceneObject.setRenderModeOverride(gl.LINES);
+                } else {
+                    sceneObject.disableRenderModeOverride();
+                }
+
+            });
+        });
+
     }
 }
 
@@ -291,14 +317,14 @@ function startGlContext() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     matrices.loadIdentity();
-    matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 1000.0);
+    matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
     appRegistry.camera.update(matrices);
 
     //appRegistry.shaders.line.use();
     //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
-    //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
+    appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
 
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
 
