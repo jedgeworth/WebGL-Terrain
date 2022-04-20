@@ -21,6 +21,7 @@ const SceneObject = require('./lib/EdgeGL/SceneObject');
 
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
+const QuadStripPrimitive = require('./lib/EdgeGL/Primitives/QuadStripPrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
@@ -70,7 +71,7 @@ function loadModels() {
 
     // Load Heightmap
     const heightmap = new Heightmap();
-    heightmap.initWithFile(require('./assets/terrain/testheightmap.png'), () => {
+    heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.modelsLoaded = true;
 
@@ -131,7 +132,14 @@ function initBuffers(gl) {
 
     appRegistry.sceneObjects.floor = floorObject;
 
+    const stripObject = new SceneObject(gl);
+    stripObject.setPrimitive(new QuadStripPrimitive(gl));
+    stripObject.setTexture(appRegistry.glTextures.grass);
+
+    appRegistry.sceneObjects.strip = stripObject;
+
     const terrain = new Terrain();
+    //terrain.setStretch(64);
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
@@ -265,6 +273,10 @@ function startGlContext() {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
 
+        //gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        gl.frontFace(gl.CCW);
+
         appRegistry.shaders.base = new Shader(gl, "base");
         appRegistry.shaders.line = new Shader(gl, "line");
 
@@ -287,20 +299,30 @@ function startGlContext() {
             }
         }, false);
 
-        // If render mode lines checkbox checked, tell all scene objects to render as lines.
-        document.getElementById('isRenderModeLines').addEventListener('change', (event) => {
-            appRegistry.options.isRenderModeLines = event.target.checked;
+        document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
+            element.addEventListener('change', (event) => {
 
-            Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
+                console.log(event.target.value);
 
-                if (appRegistry.options.isRenderModeLines) {
-                    sceneObject.setRenderModeOverride(gl.LINES);
-                } else {
-                    sceneObject.disableRenderModeOverride();
+                switch (parseInt(event.target.value)) {
+                    case 0: appRegistry.options.renderModeOverride = null; break;
+                    case 1: appRegistry.options.renderModeOverride = gl.LINES; break;
+                    case 2: appRegistry.options.renderModeOverride = gl.POINTS; break;
                 }
 
+                Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
+
+                    if (appRegistry.options.renderModeOverride !== null) {
+                        sceneObject.setRenderModeOverride(appRegistry.options.renderModeOverride);
+                    } else {
+                        sceneObject.disableRenderModeOverride();
+                    }
+
+                });
             });
         });
+
+
 
     }
 }
@@ -324,7 +346,9 @@ function startGlContext() {
     //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
-    appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
+    //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
+
+    appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
 

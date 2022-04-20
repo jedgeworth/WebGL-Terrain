@@ -116,6 +116,7 @@
      */
     setRenderMode(renderMode) {
         this.renderMode = renderMode;
+        this.originalRenderMode = this.renderMode;
     }
 
     /**
@@ -123,8 +124,6 @@
      * @param {*} newRenderMode New render mode to set (probably gl.LINES)
      */
     setRenderModeOverride(newRenderMode) {
-        this.originalRenderMode = this.renderMode;
-
         this.renderMode = newRenderMode;
     }
 

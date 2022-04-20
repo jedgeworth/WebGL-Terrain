@@ -93,14 +93,20 @@
         <div id="cameraDebug"></div>
 
         <div style="margin: 1rem auto;">
-            <input type="checkbox" id="isRenderModeLines" value="1">
-            <label for="isRenderModeLines">Render as lines</label><br>
+            <input type="radio" name="renderModeOverride" value="0" checked>
+            <label for="renderModeOverride">Render default</label><br>
+
+            <input type="radio" name="renderModeOverride" value="1">
+            <label for="renderModeOverride">Render as lines</label><br>
+
+            <input type="radio" name="renderModeOverride" value="2">
+            <label for="renderModeOverride">Render as points</label><br>
 
             <!-- <input type="text" id="speed" value="1" style="width:1rem;">
             <label for="speed">Movement speed</label> -->
         </div>
 
-        <canvas id="glcanvas" width="800" height="600">
+        <canvas id="glcanvas" width="1024" height="768">
             Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
         </canvas>
     </body>

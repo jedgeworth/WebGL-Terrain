@@ -102,6 +102,8 @@ module.exports = class Terrain {
                 this.verts[(x * this.heightmap.width) + z] = vert;
             }
         }
+
+        //console.log(this.verts);
     }
 
     /**
@@ -145,6 +147,8 @@ module.exports = class Terrain {
                 this.indices[i++] = (((z + 1) * this.heightmap.width) + (this.heightmap.width - 1));
             }
         }
+
+        //console.log(this.indices);
 
 
     }
