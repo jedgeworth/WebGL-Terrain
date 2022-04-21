@@ -7,6 +7,7 @@
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
 
+ const Vector3 = require('./types/Vector3');
 module.exports = class Heightmap {
 
     constructor() {
@@ -32,6 +33,15 @@ module.exports = class Heightmap {
             this.width = heightmapImage.width;
             this.height = heightmapImage.height;
 
+            // Ensure dimensions are even.
+            if (this.width % 2) {
+                this.width -=1;
+            }
+
+            if (this.height % 2) {
+                this.height -=1;
+            }
+
             this.canvas.width = this.width;
             this.canvas.height = this.height;
 
@@ -55,6 +65,63 @@ module.exports = class Heightmap {
             callback();
         };
         heightmapImage.src = fileName;
+    }
+
+    /**
+     * Create heightmap via the faultline algorithm.
+     *
+     * @todo: Write data as image2D.
+     */
+    initWithFaultLine(width, height, countSteps, callback) {
+
+        this.width = width;
+        this.height = height;
+
+        let x1, x2, z1, z2;
+
+        let faultVector = new Vector3();
+        let loopVector = new Vector3();
+
+        for (let x = 0; x < this.width; x += 1) {
+            this.heightValues[x] = [];
+
+            for (let z = 0; z < this.width; z += 1) {
+
+                this.heightValues[x][z] = 0;
+            }
+        }
+
+        for (let i = 0; i < countSteps; i += 1) {
+            x1 = Math.random() * this.width;
+            z1 = Math.random() * this.height;
+
+            x2 = Math.random() * this.width;
+            z2 = Math.random() * this.height;
+
+            faultVector.x = x2 - x1;
+            faultVector.z = z2 - z1;
+
+            for (let x = 0; x < this.width; x += 1) {
+
+                for (let z = 0; z < this.width; z += 1) {
+
+                    loopVector.x = x2 - x;
+                    loopVector.z = z2 - z;
+
+                    if ( (faultVector.x * loopVector.z) - (faultVector.z * loopVector.x) > 0 ) {
+                        this.heightValues[x][z] += 1;
+                    } else {
+                        this.heightValues[x][z] -= 1;
+                    }
+                }
+            }
+        }
+
+        this.calculateRange();
+        this.postProcess();
+        this.drawToCanvas();
+
+        callback();
     }
 
     /**
@@ -89,6 +156,30 @@ module.exports = class Heightmap {
 
         this.highValue -= this.lowValue;
         this.lowValue = 0.0;
+    }
+
+    /**
+     *
+     */
+    drawToCanvas() {
+
+        this.canvas = document.createElement('canvas');
+        let ctx = this.canvas.getContext('2d');
+
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
+        for (let x = 0; x < this.width; x += 1) {
+            for (let z = 0; z < this.height; z += 1) {
+                this.heightValues[x][z] -= this.lowValue;
+
+                ctx.strokeStyle = `rgb(${this.heightValues[x][z]}, ${this.heightValues[x][z]}, ${this.heightValues[x][z]})`;
+                ctx.strokeRect(x, z, 1, 1);
+                ctx.strokeStyle = '#000';
+            }
+        }
+
+        document.getElementById('debug').appendChild(this.canvas);
     }
 
 

@@ -71,6 +71,14 @@ function loadModels() {
 
     // Load Heightmap
     const heightmap = new Heightmap();
+
+    // heightmap.initWithFaultLine(256, 256, 2000, () => {
+    //     appRegistry.heightmaps.main = heightmap;
+    //     appRegistry.modelsLoaded = true;
+
+    //     assetsLoaded();
+    // });
+
     heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.modelsLoaded = true;
@@ -139,7 +147,7 @@ function initBuffers(gl) {
     appRegistry.sceneObjects.strip = stripObject;
 
     const terrain = new Terrain();
-    //terrain.setStretch(64);
+    terrain.setStretch(8);
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
@@ -273,9 +281,9 @@ function startGlContext() {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
 
-        //gl.enable(gl.CULL_FACE);
+        gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
-        gl.frontFace(gl.CCW);
+        gl.frontFace(gl.CW);
 
         appRegistry.shaders.base = new Shader(gl, "base");
         appRegistry.shaders.line = new Shader(gl, "line");
@@ -301,8 +309,6 @@ function startGlContext() {
 
         document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
             element.addEventListener('change', (event) => {
-
-                console.log(event.target.value);
 
                 switch (parseInt(event.target.value)) {
                     case 0: appRegistry.options.renderModeOverride = null; break;
@@ -348,7 +354,7 @@ function startGlContext() {
     appRegistry.shaders.base.use();
     //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
 
-    appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
+    //appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
 

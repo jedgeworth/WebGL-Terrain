@@ -102,7 +102,7 @@ function zeroPosition(v)
  * @param {*} v2 Second vector.
  */
 function crossVector(v1, v2) {
-    result = new Vector3();
+    const result = new Vector3();
 
     result.x = (v1.x * v2.z) - (v1.z * v2.y);
     result.y = (v1.z * v2.x) - (v1.x * v2.z);
@@ -112,7 +112,7 @@ function crossVector(v1, v2) {
 }
 
 function addVector(v1, v2) {
-    result = new Vector3();
+    const result = new Vector3();
 
     result.x = v1.x + v2.x;
     result.y = v1.y + v2.y;
@@ -122,7 +122,7 @@ function addVector(v1, v2) {
 }
 
 function subtractVector(v1, v2) {
-    result = new Vector3();
+    const result = new Vector3();
 
     result.x = v1.x - v2.x;
     result.y = v1.y - v2.y;
@@ -132,7 +132,7 @@ function subtractVector(v1, v2) {
 }
 
 function divideVector(v, value) {
-    result = new Vector3();
+    const result = new Vector3();
 
     result.x = v.x / value;
     result.y = v.y / value;

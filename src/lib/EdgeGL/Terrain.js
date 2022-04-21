@@ -8,7 +8,8 @@
  */
 
 const Vector12 = require('./types/Vector12');
-const {normalize} = require('./VectorMath');
+const Vector3 = require('./types/Vector3');
+const {normalize, normalizePosition, crossVector, addVector, divideVector} = require('./VectorMath');
 
 module.exports = class Terrain {
 
@@ -65,7 +66,8 @@ module.exports = class Terrain {
         this.zMax = this.length;
 
         this.createVertices();
-        this.createIndexes();
+        this.createTriangleStripIndexes();
+        this.createNormals();
     }
 
     /**
@@ -102,8 +104,6 @@ module.exports = class Terrain {
                 this.verts[(x * this.heightmap.width) + z] = vert;
             }
         }
-
-        //console.log(this.verts);
     }
 
     /**
@@ -113,15 +113,46 @@ module.exports = class Terrain {
         for (let x = 1; x < this.heightmap.width - 1; x += 1) {
             for (let z = 1; z < this.heightmap.height - 1; z += 1) {
 
+                let top = new Vector12();
+                let bottom = new Vector12();
+                let left = new Vector12();
+                let right = new Vector12();
+
+                let crossRT = new Vector3();
+                let crossBR = new Vector3();
+                let crossBL = new Vector3();
+                let crossTL = new Vector3();
+
+                top    = this.verts[ (x * this.heightmap.width) + (z - 1) ];
+                bottom = this.verts[ (x * this.heightmap.width) + (z + 1) ];
+                left   = this.verts[ ((x - 1) * this.heightmap.width) + z ];
+                right  = this.verts[ ((x + 1) * this.heightmap.width) + z ];
+
+                crossRT = crossVector(right, top);
+                crossTL = crossVector(top, left);
+                crossBR = crossVector(bottom, right);
+                crossBL = crossVector(bottom, left);
+
+                let avg = addVector(crossRT, crossTL);
+                avg = addVector(avg, crossBR);
+                avg = addVector(avg, crossBL);
+                avg = divideVector(avg, 4.0);
+
+                normalizePosition(avg);
+
+                this.verts[(x * this.heightmap.width) + z].nx = avg.x;
+                this.verts[(x * this.heightmap.width) + z].ny = avg.y;
+                this.verts[(x * this.heightmap.width) + z].nz = avg.z;
 
             }
         }
     }
 
     /**
-     * Create indexes.
+     * Create GL_TRIANGLE_STRIP indexes.
+     *
      */
-    createIndexes() {
+    createTriangleStripIndexes() {
         let i = 0;
 
         const numStrips = this.heightmap.height - 1;
@@ -147,10 +178,33 @@ module.exports = class Terrain {
                 this.indices[i++] = (((z + 1) * this.heightmap.width) + (this.heightmap.width - 1));
             }
         }
+    }
 
-        //console.log(this.indices);
+    /**
+     * Create GL_TRIANGLE indexes.
+     *
+     */
+     createTriangleIndexes() {
+        let i = 0;
 
+        this.indices = [];
 
+        const w = this.heightmap.width;
+
+        for (let z = 0; z < this.heightmap.height-1; z += 1) {
+            for (let x = 0; x < this.heightmap.width-1; x += 1) {
+
+                this.indices.push( ( z      * w) + x );		//TL
+                this.indices.push( ((z + 1) * w) + x );		//BL
+                this.indices.push( ((z + 1) * w) + x + 1 );	//BR
+
+                this.indices.push( ((z + 1) * w) + x + 1 );	//BR
+                this.indices.push( ( z      * w) + x + 1 );	//TR
+                this.indices.push( ( z      * w) + x );		//TL
+            }
+        }
+
+        this.indices = Uint16Array.from(this.indices);
     }
 
 
@@ -178,14 +232,15 @@ module.exports = class Terrain {
             bufferTexCoords.push(this.verts[i].s);
             bufferTexCoords.push(this.verts[i].t);
 
-            bufferNormals.push(1.0);
-            bufferNormals.push(1.0);
-            bufferNormals.push(1.0);
+            bufferNormals.push(this.verts[i].nx);
+            bufferNormals.push(this.verts[i].ny);
+            bufferNormals.push(this.verts[i].nz);
         }
 
         sceneObject.setVertices(bufferVertices);
         sceneObject.setColors(bufferColors);
         sceneObject.setTexCoords(bufferTexCoords);
+        sceneObject.setNormals(bufferNormals);
         sceneObject.setIndices(this.indices);
 
     }

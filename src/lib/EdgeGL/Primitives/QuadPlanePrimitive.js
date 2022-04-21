@@ -11,10 +11,10 @@ module.exports = class QuadPlanePrimitive {
     constructor(gl) {
         this.vertices = [
             // Bottom face
-            -100.0, 0.0, -100.0,    //BL
-             100.0, 0.0, -100.0,    //BR
-             100.0, 0.0,  100.0,    //TR
-            -100.0, 0.0,  100.0,    //TL
+            -100.0, 0.0, -100.0,    //BL V0
+             100.0, 0.0, -100.0,    //BR V1
+             100.0, 0.0,  100.0,    //TR V2
+            -100.0, 0.0,  100.0,    //TL V3
         ];
 
 

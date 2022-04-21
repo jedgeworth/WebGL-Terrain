@@ -24,7 +24,7 @@
             200.0, 200.0, 0.0,   //TR V2
 
             0.0,   100.0, 0.0,   //ML V3
-            100.0, 100.0, 100.0,   //MM V4
+            100.0, 100.0, 0.0,   //MM V4
             200.0, 100.0, 0.0,   //MR V5
 
             0.0,   0.0,   0.0,   //BL V6
@@ -62,13 +62,23 @@
             1.0,  0.0, // BR
         ];
 
-        this.indices = [
-            0,  3,  1,      4, 2, 5,   5,3,
 
-            3,  6,  4,      7, 5, 8
+        this.indices = [
+            0,  3,  1,    1,  3,  4,        1,  4,  2,    2,  4,  5,
+            3,  6,  4,    4,  6,  7,        4,  7,  5,    5,  7,  8
         ];
 
 
-        this.renderMode = gl.TRIANGLE_STRIP;
+        this.renderMode = gl.TRIANGLES;
+
+
+        // this.indices = [
+        //     0,  3,  1,      4, 2, 5,   5,3,
+
+        //     3,  6,  4,      7, 5, 8
+        // ];
+
+
+        // this.renderMode = gl.TRIANGLE_STRIP;
     }
 }
