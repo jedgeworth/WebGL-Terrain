@@ -327,20 +327,41 @@ function startGlContext() {
                 });
             });
         });
-
-
-
     }
 }
 
-  /**
-   * drawScene
-   *
-   * Renders the scene.
-   */
-  function drawScene(gl) {
+/**
+ * Allow a window rezize to resize the canvas.
+ *
+ * (src: https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)
+ */
+function handleWindowResize(canvas) {
+
+    const displayWidth  = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+
+    const needResize = canvas.width  !== displayWidth ||
+                        canvas.height !== displayHeight;
+
+    if (needResize) {
+        canvas.width  = displayWidth;
+        canvas.height = displayHeight;
+    }
+
+    return needResize;
+}
+
+/**
+ * drawScene
+ *
+ * Renders the scene.
+ */
+function drawScene(gl) {
 
     handleKeys();
+    handleWindowResize(gl.canvas);
+
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -353,7 +374,6 @@ function startGlContext() {
 
     appRegistry.shaders.base.use();
     //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
-
     //appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
@@ -364,13 +384,13 @@ function startGlContext() {
 
     // Handle any animated meshes.
     const currentTime = (new Date).getTime();
-      if (appRegistry.lastUpdateTime) {
+    if (appRegistry.lastUpdateTime) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
         // (Call any updates on animated sceneObjects based on delta.)
-      }
+    }
 
-      appRegistry.lastUpdateTime = currentTime;
+    appRegistry.lastUpdateTime = currentTime;
 
     drawDebug();
 }
