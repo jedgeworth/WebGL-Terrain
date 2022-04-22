@@ -14,4 +14,8 @@ module.exports = class Vector3 {
         this.y = 0.0;
         this.z = 0.0;
     }
+
+    flatten() {
+        return [this.x, this.y, this.z];
+    }
 }

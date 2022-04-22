@@ -16,6 +16,7 @@ module.exports = class AppRegistry{
         this.sceneObjects = {};
         this.terrains = {};
         this.nodePaths = {};
+        this.lights = {};
         this.camera = null;
         this.lastUpdateTime = 0;
 

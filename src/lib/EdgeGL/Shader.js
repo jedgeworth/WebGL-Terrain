@@ -29,9 +29,16 @@ module.exports = class Shader {
         this.vertexNormalAttribute = null;
         this.vertexColorAttribute = null;
 
+        // this.light0DirectionAttribute = null;
+        // this.light0AmbientAttribute = null;
+        // this.light0DiffuseAttribute = null;
+        // this.light0SpecularAttribute = null;
+
         this.hasVertexColorAttribute = false;
         this.hasVertexNormalAttribute = false;
         this.hasTextureCoordAttribute = false;
+
+        //this.hasLight0Attribute = false;
 
         this.compile(scriptElementId);
     }
@@ -63,6 +70,10 @@ module.exports = class Shader {
 
         if (vertexShaderSource.indexOf("aTextureCoord") > 0) {
             this.hasVertexNormalAttribute = true;
+        }
+
+        if (vertexShaderSource.indexOf("aLight0Direction") > 0) {
+            this.hasLight0Attribute = true;
         }
 
         this.gl.shaderSource(this.vertexShader, vertexShaderSource);
@@ -115,6 +126,20 @@ module.exports = class Shader {
             this.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexNormal");
             this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
         }
+
+        // if (this.hasLight0Attribute) {
+        //     this.light0DirectionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Direction");
+        //     this.gl.enableVertexAttribArray(this.light0DirectionAttribute);
+
+        //     this.light0AmbientAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Ambient");
+        //     this.gl.enableVertexAttribArray(this.light0AmbientAttribute);
+
+        //     this.light0DiffuseAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Diffuse");
+        //     this.gl.enableVertexAttribArray(this.light0DiffuseAttribute);
+
+        //     this.light0SpecularAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Specular");
+        //     this.gl.enableVertexAttribArray(this.light0SpecularAttribute);
+        // }
     }
 
     /**
@@ -130,6 +155,27 @@ module.exports = class Shader {
     stop() {
         this.gl.useProgram(null);
     }
+
+
+    /**
+     * Sets lighting from a Light().
+     * @param {*} lightObject Instantiated Light() object.
+     */
+    setLightUniforms(lightObject) {
+
+        const i = lightObject.lightIndex;
+
+        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Direction`);
+        let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Ambient`);
+        let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Diffuse`);
+        let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Specular`);
+
+        this.gl.uniform3fv(light0Direction, lightObject.position.flatten());
+        this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
+        this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
+        this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
+    }
+
 
     /**
      * Sets the perspective matrix, and model-view matrix on the shader program.

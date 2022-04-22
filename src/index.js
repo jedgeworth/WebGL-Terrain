@@ -18,6 +18,7 @@ const matrices = new Matrices();
 const Camera = require('./lib/EdgeGL/Camera');
 const Shader = require('./lib/EdgeGL/Shader');
 const SceneObject = require('./lib/EdgeGL/SceneObject');
+const Light = require('./lib/EdgeGL/Light');
 
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
@@ -155,6 +156,14 @@ function initBuffers(gl) {
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
     terrainObject.setTexture(appRegistry.glTextures.grass);
     appRegistry.sceneObjects.terrain = terrainObject;
+
+    const sunLight = new Light(gl, "0");
+    sunLight.setDirection(1.0, 1.0, 1.0);
+    sunLight.setAmbient(0.4, 0.4, 0.4);
+    sunLight.setDiffuse(0.7, 0.7, 0.7);
+    sunLight.setSpecular(0.6, 0.6, 0.6);
+    sunLight.setRenderPosition(500, 500, 500);
+    appRegistry.lights.light0 = sunLight;
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -388,13 +397,11 @@ function drawScene(gl) {
     //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
+    appRegistry.shaders.base.setLightUniforms(appRegistry.lights.light0);
     //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
     //appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
-
-    //appRegistry.shaders.terrain.use();
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
-
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
