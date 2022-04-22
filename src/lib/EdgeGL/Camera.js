@@ -23,6 +23,28 @@ module.exports = class Camera {
     }
 
     /**
+     * Set a specific position.
+     * @param {*} x
+     * @param {*} y
+     * @param {*} z
+     */
+    setPosition(x, y ,z) {
+        this.xPos = x;
+        this.yPos = y;
+        this.zPos = z;
+    }
+
+    /**
+     * Set a specific rotation.
+     * @param {*} pitch
+     * @param {*} yaw
+     */
+    setRotation(pitch, yaw) {
+        this.pitch = pitch;
+        this.yaw = yaw;
+    }
+
+    /**
      * Turn camera left.
      */
     yawLeft() {
@@ -110,6 +132,14 @@ module.exports = class Camera {
         this.TURNSPEED = newSpeed;
     }
 
+    incrementWalkSpeed() {
+        this.WALKSPEED += 1;
+    }
+
+    decrementWalkSpeed() {
+        this.WALKSPEED -= 1;
+    }
+
     /**
      * Called per frame to update the scene with the current camera position/rotation.
      */
@@ -133,11 +163,13 @@ module.exports = class Camera {
      * @param {*} debugElementId ID of the target HTML element to display the text.
      */
     debug(debugElementId) {
-        let text = `pitch: ${this.pitch}`;
-        text += `yaw: ${this.yaw}`;
-        text += `x: ${this.xPos}`;
-        text += `y: ${this.yPos}`;
-        text += `z: ${this.zPos}`;
+        let text = `<h3>Camera</h3>`;
+        text += `speed: ${this.WALKSPEED}<br>\n`;
+        text += `pitch: ${this.pitch}<br>\n`;
+        text += `yaw: ${this.yaw}<br>\n`;
+        text += `x: ${this.xPos.toFixed(2)}<br>\n`;
+        text += `y: ${this.yPos.toFixed(2)}<br>\n`;
+        text += `z: ${this.zPos.toFixed(2)}`;
 
         document.getElementById(debugElementId).innerHTML = text;
     }

@@ -179,6 +179,9 @@ module.exports = class Heightmap {
             }
         }
 
+        this.canvas.style.width = '100px';
+        this.canvas.style.height = '100px';
+
         document.getElementById('debug').appendChild(this.canvas);
     }
 

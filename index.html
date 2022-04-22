@@ -22,6 +22,11 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700" rel="stylesheet">
 
     <style>
+
+        h3{
+            margin:1rem 0 .5rem 0;
+        }
+
         #glCanvas{
             position:absolute;
             top:0;
@@ -39,7 +44,16 @@
             z-index:1;
         }
 
-        #options{
+        #bottomRight{
+            position:absolute;
+            bottom:0;
+            right:0;
+            padding:1rem;
+            background:#fff;
+            z-index:1;
+        }
+
+        #topRight{
             position:absolute;
             top:0;
             right:0;
@@ -48,6 +62,11 @@
             text-align:left;
             padding:1rem;
             z-index:1;
+            background:#fff;
+        }
+
+        #cameraDebug{
+            margin-top:1rem;
         }
     </style>
 
@@ -79,9 +98,9 @@
           highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
           vLighting = ambientLight + (directionalLightColor * directional);
         }
-      </script>
+    </script>
 
-      <script id="base-fs" type="x-shader/x-fragment">
+    <script id="base-fs" type="x-shader/x-fragment">
         varying highp vec2 vTextureCoord;
         varying highp vec3 vLighting;
 
@@ -92,10 +111,10 @@
 
           gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
         }
-      </script>
+    </script>
 
 
-      <script id="line-vs" type="x-shader/x-vertex">
+    <script id="line-vs" type="x-shader/x-vertex">
         attribute highp vec3 aVertexPosition;
         attribute highp vec3 aVertexColor;
 
@@ -108,22 +127,109 @@
           gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
           vColor = aVertexColor;
         }
-      </script>
+    </script>
 
-      <script id="line-fs" type="x-shader/x-fragment">
+    <script id="line-fs" type="x-shader/x-fragment">
         varying highp vec3 vColor;
 
         void main(void) {
           gl_FragColor = vec4(vColor.rgb, 1);
         }
-      </script>
+    </script>
+
+
+    <script id="terrain-vs" type="x-shader/x-vertex">
+        varying vec3 vertexNormal;
+        varying vec3 eyeVector;
+
+        varying vec4 vertexPosition;
+
+        varying vec4 mvmVertexPosition;
+        varying vec4 mvpmVertexPosition;
+
+        void main(void)
+        {
+            vertexNormal = normalize(gl_NormalMatrix * gl_Normal);
+
+            //vertexLightPosition = normalize(gl_LightSource[0].position.xyz);
+            eyeVector = normalize(-vec3(gl_ModelViewMatrix * gl_Vertex));
+
+            gl_FrontColor = gl_Color;
+            gl_TexCoord[0].st = gl_MultiTexCoord0.st;
+            gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+            vertexPosition = gl_Vertex;
+
+            mvmVertexPosition = gl_ModelViewMatrix * gl_Vertex;
+            mvpmVertexPosition = gl_ModelViewProjectionMatrix * gl_Vertex;
+        }
+    </script>
+
+    <script id="terrain-fs" type="x-shader/x-fragment">
+
+        varying vec3 vertexNormal;
+        varying vec3 eyeVector;
+
+        varying vec4 vertexPosition;
+
+        uniform sampler2D grass;
+        uniform sampler2D grassNormal;
+
+        varying vec4 mvmVertexPosition;
+        varying vec4 mvpmVertexPosition;
+
+        vec4 lighting(int lightIndex)
+        {
+            vec4 color;
+
+            vec3 lightPosition = normalize(gl_LightSource[lightIndex].position.xyz);
+
+            vec3 fragmentNormal = normalize(texture2D(grassNormal, gl_TexCoord[0].st).rgb * 2.0 - 1.0);
+            //vec3 normal = normalize(fragmentNormal * vertexNormal);
+            vec3 normal = vertexNormal;
+            //vec3 normal = fragmentNormal;
+
+            color = gl_LightSource[lightIndex].ambient;
+
+            // Diffuse
+            float vertexDiffuseValue = max(dot(normal, lightPosition), 0.0);
+            float fragmentDiffuseValue = max(dot(normal, lightPosition), 0.0);
+
+            color += fragmentDiffuseValue;
+
+            // Specular
+            float shininess = 0.8;
+
+            vec3 reflectVector = normalize(-reflect(lightPosition, normal));
+
+            vec4 specular = gl_LightSource[lightIndex].specular * pow(max(dot(reflectVector, eyeVector), 0.0), shininess);
+
+            color += specular;
+            return color;
+        }
+
+        void main()
+        {
+            //if (dot(mvpmVertexPosition, gl_ClipPlane[0]) > 0.0) {
+            //if (gl_Position.y > gl_ClipPlane[0].y) {
+
+                vec4 texturing = texture2D(grass, gl_TexCoord[0].st);
+
+                gl_FragColor = texturing * lighting(0);
+
+            //} else {
+            //    discard;
+            //}
+        }
+
+    </script>
 
 </head>
     <body>
         <div id="debug"></div>
-        <div id="cameraDebug"></div>
 
-        <div id="options">
+
+        <div id="topRight">
+            <h3>Render options</h3>
             <input type="radio" name="renderModeOverride" value="0" checked>
             <label for="renderModeOverride">Render default</label><br>
 
@@ -135,6 +241,16 @@
 
             <!-- <input type="text" id="speed" value="1" style="width:1rem;">
             <label for="speed">Movement speed</label> -->
+
+            <div id="cameraDebug"></div>
+        </div>
+
+        <div id="bottomRight">
+            Controls:
+            <b>W,A,S,D</b> = movement;
+            <b>E,Q</b> = Up, Down;
+            <b>Arrow keys</b> = rotation;
+            <b>R, F</b> = Increment/decrement camera speed
         </div>
 
         <canvas id="glcanvas" style="width:100%; height:100%">

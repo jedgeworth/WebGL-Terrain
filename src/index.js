@@ -72,7 +72,7 @@ function loadModels() {
     // Load Heightmap
     const heightmap = new Heightmap();
 
-    // heightmap.initWithFaultLine(256, 256, 2000, () => {
+    // heightmap.initWithFaultLine(128, 128, 2000, () => {
     //     appRegistry.heightmaps.main = heightmap;
     //     appRegistry.modelsLoaded = true;
 
@@ -201,6 +201,7 @@ function createGlTexture(gl, textureImage) {
 const currentlyPressedKeys = {};
 
 function handleKeyDown(event) {
+    console.log("pressed "+ event.keyCode);
     currentlyPressedKeys[event.keyCode] = true;
 }
 
@@ -256,6 +257,16 @@ function handleKeys() {
       // Q
       appRegistry.camera.moveDown();
     }
+
+    if (currentlyPressedKeys[82]) {
+        // R
+        appRegistry.camera.incrementWalkSpeed();
+    }
+
+    if (currentlyPressedKeys[70]) {
+        // F
+        appRegistry.camera.decrementWalkSpeed();
+    }
   }
 
 /**
@@ -274,6 +285,8 @@ function startGlContext() {
 
     const gl = initWebGL(canvas);
     appRegistry.camera = new Camera();
+    appRegistry.camera.setPosition(-160, 440, -63);
+    appRegistry.camera.setRotation(19, -128);
 
     if (gl !== null) {
         gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
@@ -287,6 +300,7 @@ function startGlContext() {
 
         appRegistry.shaders.base = new Shader(gl, "base");
         appRegistry.shaders.line = new Shader(gl, "line");
+        //appRegistry.shaders.terrain = new Shader(gl, "terrain");
 
         appRegistry.glTextures.grass = createGlTexture(gl, appRegistry.textureImages.grass);
         appRegistry.glTextures.blank = createGlTexture(gl, appRegistry.textureImages.blank);
@@ -368,6 +382,7 @@ function drawScene(gl) {
     matrices.loadIdentity();
     matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
     appRegistry.camera.update(matrices);
+    appRegistry.camera.debug('cameraDebug');
 
     //appRegistry.shaders.line.use();
     //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
@@ -376,6 +391,8 @@ function drawScene(gl) {
     //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
     //appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
+
+    //appRegistry.shaders.terrain.use();
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
 
 
