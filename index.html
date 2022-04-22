@@ -44,6 +44,15 @@
             z-index:1;
         }
 
+        #bottomLeft{
+            position:absolute;
+            bottom:0;
+            left:0;
+            padding:1rem;
+            color:#fff;
+            z-index:1;
+        }
+
         #bottomRight{
             position:absolute;
             bottom:0;
@@ -239,8 +248,38 @@
             <input type="radio" name="renderModeOverride" value="2">
             <label for="renderModeOverride">Render as points</label><br>
 
-            <!-- <input type="text" id="speed" value="1" style="width:1rem;">
-            <label for="speed">Movement speed</label> -->
+            <h3>Sunlight</h3>
+
+            <label>
+                Diffuse R
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.01" id="diffuseR" name="diffuseR" value="0.7">
+            </label>
+
+            <label>
+                Diffuse G
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.01"  id="diffuseG" name="diffuseG" value="0.7">
+            </label>
+
+            <label>
+                Diffuse B
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.01"  id="diffuseB" name="diffuseB" value="0.7">
+            </label>
+
+            <label>
+                Specular R
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularR" name="specularR" value="0.6">
+            </label>
+
+            <label>
+                Specular G
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularG" name="specularG" value="0.6">
+            </label>
+
+            <label>
+                Specular B
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularB" name="specularB" value="0.6">
+            </label>
+
 
             <div id="cameraDebug"></div>
         </div>
@@ -248,9 +287,13 @@
         <div id="bottomRight">
             Controls:
             <b>W,A,S,D</b> = movement;
-            <b>E,Q</b> = Up, Down;
+            <b>Space,Q</b> = Up, Down;
             <b>Arrow keys</b> = rotation;
             <b>R, F</b> = Increment/decrement camera speed
+        </div>
+
+        <div id="bottomLeft">
+            &copy; 2022 <a href="https://jamesedgeworth.com">James Edgeworth</a>
         </div>
 
         <canvas id="glcanvas" style="width:100%; height:100%">

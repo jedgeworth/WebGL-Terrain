@@ -137,7 +137,11 @@ module.exports = class Camera {
     }
 
     decrementWalkSpeed() {
-        this.WALKSPEED -= 1;
+
+        if (this.WALKSPEED > 0) {
+            this.WALKSPEED -= 1;
+        }
+
     }
 
     /**

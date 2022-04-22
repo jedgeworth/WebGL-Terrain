@@ -22,7 +22,7 @@ const Light = require('./lib/EdgeGL/Light');
 
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
-const QuadStripPrimitive = require('./lib/EdgeGL/Primitives/QuadStripPrimitive');
+const CubePrimitive = require('./lib/EdgeGL/Primitives/CubePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
@@ -49,6 +49,7 @@ function loadTextures() {
         'blank' : require('./assets/img/blank.png'),
         'grass' : require('./assets/img/grass.jpg'),
         'floor' : require('./assets/img/floor.png'),
+        'lightbulb' : require('./assets/img/lightbulb.jpg'),
     };
 
     var countTexturesLoaded = 0;
@@ -135,20 +136,16 @@ function initBuffers(gl) {
     originObject.setPrimitive(new OriginPrimitive(gl));
     appRegistry.sceneObjects.worldOrigin = originObject;
 
+    //
     const floorObject = new SceneObject(gl);
     floorObject.setPrimitive(new QuadPlanePrimitive(gl));
     floorObject.setTexture(appRegistry.glTextures.grass);
 
     appRegistry.sceneObjects.floor = floorObject;
 
-    const stripObject = new SceneObject(gl);
-    stripObject.setPrimitive(new QuadStripPrimitive(gl));
-    stripObject.setTexture(appRegistry.glTextures.grass);
-
-    appRegistry.sceneObjects.strip = stripObject;
-
+    //
     const terrain = new Terrain();
-    terrain.setStretch(8);
+    terrain.setStretch(4);
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
@@ -157,6 +154,7 @@ function initBuffers(gl) {
     terrainObject.setTexture(appRegistry.glTextures.grass);
     appRegistry.sceneObjects.terrain = terrainObject;
 
+    //
     const sunLight = new Light(gl, "0");
     sunLight.setDirection(1.0, 1.0, 1.0);
     sunLight.setAmbient(0.4, 0.4, 0.4);
@@ -164,6 +162,12 @@ function initBuffers(gl) {
     sunLight.setSpecular(0.6, 0.6, 0.6);
     sunLight.setRenderPosition(500, 500, 500);
     appRegistry.lights.light0 = sunLight;
+
+    const sunLightObject = new SceneObject(gl);
+    sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
+    sunLightObject.setTexture(appRegistry.glTextures.lightbulb);
+    sunLight.setSceneObject(sunLightObject);
+    appRegistry.sceneObjects.sunLight = sunLightObject;
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -210,7 +214,6 @@ function createGlTexture(gl, textureImage) {
 const currentlyPressedKeys = {};
 
 function handleKeyDown(event) {
-    console.log("pressed "+ event.keyCode);
     currentlyPressedKeys[event.keyCode] = true;
 }
 
@@ -303,17 +306,17 @@ function startGlContext() {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
 
-        gl.enable(gl.CULL_FACE);
+        //gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
 
         appRegistry.shaders.base = new Shader(gl, "base");
         appRegistry.shaders.line = new Shader(gl, "line");
-        //appRegistry.shaders.terrain = new Shader(gl, "terrain");
 
         appRegistry.glTextures.grass = createGlTexture(gl, appRegistry.textureImages.grass);
         appRegistry.glTextures.blank = createGlTexture(gl, appRegistry.textureImages.blank);
         appRegistry.glTextures.floor = createGlTexture(gl, appRegistry.textureImages.floor);
+        appRegistry.glTextures.lightbulb = createGlTexture(gl, appRegistry.textureImages.lightbulb);
 
         initBuffers(gl);
 
@@ -348,6 +351,27 @@ function startGlContext() {
                     }
 
                 });
+            });
+        });
+
+
+        document.querySelectorAll('input[class="diffuse"]').forEach((element) => {
+            element.addEventListener('change', (event) => {
+                appRegistry.lights.light0.setDiffuse(
+                    document.getElementById('diffuseR').value,
+                    document.getElementById('diffuseG').value,
+                    document.getElementById('diffuseB').value,
+                );
+            });
+        });
+
+        document.querySelectorAll('input[class="specular"]').forEach((element) => {
+            element.addEventListener('change', (event) => {
+                appRegistry.lights.light0.setSpecular(
+                    document.getElementById('specularR').value,
+                    document.getElementById('specularG').value,
+                    document.getElementById('specularB').value,
+                );
             });
         });
     }
@@ -393,14 +417,14 @@ function drawScene(gl) {
     appRegistry.camera.update(matrices);
     appRegistry.camera.debug('cameraDebug');
 
-    //appRegistry.shaders.line.use();
-    //appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
+    appRegistry.shaders.line.use();
+    appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
+    //appRegistry.lights.light0.randomise();
     appRegistry.shaders.base.setLightUniforms(appRegistry.lights.light0);
-    //appRegistry.sceneObjects.floor.render(appRegistry.shaders.base, matrices);
-    //appRegistry.sceneObjects.strip.render(appRegistry.shaders.base, matrices);
 
+    appRegistry.sceneObjects.sunLight.render(appRegistry.shaders.base, matrices);
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);

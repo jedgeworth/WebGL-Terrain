@@ -22,6 +22,7 @@ module.exports = class Light {
 
         this.gl = glContext;
         this.lightIndex = lightIndex;
+        this.sceneObject = null;
 
         this.renderPosition = new Vector3();
 
@@ -120,6 +121,37 @@ module.exports = class Light {
         this.renderPosition.x = x;
         this.renderPosition.y = y;
         this.renderPosition.z = z;
+
+        if (this.sceneObject !== null) {
+            sceneObject.position.x = this.renderPosition.x;
+            sceneObject.position.y = this.renderPosition.y;
+            sceneObject.position.z = this.renderPosition.z;
+        }
+    }
+
+    randomise() {
+        this.diffuse.r = Math.random();
+        this.diffuse.g = Math.random();
+        this.diffuse.b = Math.random();
+    }
+
+
+    /**
+     * Set the primitive, if rendering for debug.
+     */
+    setSceneObject(sceneObject) {
+        this.sceneObject = sceneObject;
+
+        if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0) {
+            sceneObject.position.x = this.renderPosition.x;
+            sceneObject.position.y = this.renderPosition.y;
+            sceneObject.position.z = this.renderPosition.z;
+        } else {
+            sceneObject.position.x = this.position.x;
+            sceneObject.position.y = this.position.y;
+            sceneObject.position.z = this.position.z;
+        }
+
     }
 
 }

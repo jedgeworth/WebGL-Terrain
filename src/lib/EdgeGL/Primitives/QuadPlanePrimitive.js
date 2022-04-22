@@ -8,14 +8,32 @@
 
 module.exports = class QuadPlanePrimitive {
 
-    constructor(gl) {
-        this.vertices = [
-            // Bottom face
-            -100.0, 0.0, -100.0,    //BL V0
-             100.0, 0.0, -100.0,    //BR V1
-             100.0, 0.0,  100.0,    //TR V2
-            -100.0, 0.0,  100.0,    //TL V3
-        ];
+    constructor(gl, w, isWall) {
+
+        if (w === undefined) {
+            w = 100;
+        }
+
+        if (isWall === true) {
+
+            this.vertices = [
+                // Front face
+                -w, -w, 0.0,    //BL V0
+                 w, -w, 0.0,    //BR V1
+                 w,  w, 0.0,    //TR V2
+                -w,  w, 0.0,    //TL V3
+            ];
+
+        } else {
+            this.vertices = [
+                // Bottom face
+                -w, 0.0, -w,    //BL V0
+                 w, 0.0, -w,    //BR V1
+                 w, 0.0,  w,    //TR V2
+                -w, 0.0,  w,    //TL V3
+            ];
+        }
+
 
 
         this.normals = [
