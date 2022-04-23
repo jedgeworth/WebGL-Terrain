@@ -122,6 +122,80 @@
         }
     </script>
 
+    <script id="base2-vs" type="x-shader/x-vertex">#version 100
+
+        attribute highp vec3 aVertexNormal;
+        attribute highp vec3 aVertexPosition;
+        attribute highp vec2 aTextureCoord;
+
+        uniform highp mat4 uNormalMatrix;
+        uniform highp mat4 uMVMatrix;
+        uniform highp mat4 uPMatrix;
+
+        varying highp vec2 v_TextureCoord;
+        varying highp vec3 v_VertexNormal;
+        varying highp vec3 v_EyeVector;
+
+        void main(void) {
+
+            v_TextureCoord = aTextureCoord;
+            v_VertexNormal = vec3( normalize( uNormalMatrix * vec4(aVertexNormal, 1.0) ) );
+
+            v_EyeVector = vec3( normalize( -vec3(uMVMatrix * vec4(aVertexPosition, 1.0)) ) );
+
+            gl_PointSize = 2.0;
+            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        }
+    </script>
+
+    <script id="base2-fs" type="x-shader/x-fragment">#version 100
+
+        varying highp vec2 v_TextureCoord;
+        varying highp vec3 v_VertexNormal;
+        varying highp vec3 v_EyeVector;
+
+        uniform sampler2D uSampler;
+        uniform highp vec3 uLight0Ambient;
+        uniform highp vec3 uLight0Diffuse;
+        uniform highp vec3 uLight0Specular;
+        uniform highp vec3 uLight0Direction;
+
+        highp vec4 lighting() {
+
+            highp vec4 color;
+
+            highp vec3 lightPosition = normalize(uLight0Direction.xyz);
+
+            // If we have a normal map, get normal from that.
+            highp vec3 normal = v_VertexNormal;
+
+            // Ambient
+            color = vec4(uLight0Ambient, 1.0);
+
+            // Diffuse
+            highp float vertexDiffuseValue = max( dot(normal, uLight0Direction), 0.0 );
+
+            color += vertexDiffuseValue;
+
+            // Specular
+            highp float shininess = 0.5;
+
+            highp vec3 reflectVector = normalize( -reflect(uLight0Direction, normal) );
+            highp vec4 specular = vec4(uLight0Specular, 1.0) * pow(  max( dot(reflectVector, v_EyeVector.xyz), 0.0 ), shininess  );
+
+            color += specular;
+
+            return color;
+        }
+
+        void main(void) {
+          highp vec4 texturing = texture2D(uSampler, vec2(v_TextureCoord.s, v_TextureCoord.t));
+
+          //gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+          gl_FragColor = texturing * lighting();
+        }
+    </script>
+
 
     <script id="line-vs" type="x-shader/x-vertex">
         attribute highp vec3 aVertexPosition;

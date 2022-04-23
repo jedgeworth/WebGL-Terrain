@@ -310,7 +310,8 @@ function startGlContext() {
         gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
 
-        appRegistry.shaders.base = new Shader(gl, "base");
+        appRegistry.shaders.base = new Shader(gl, "base2");
+        //appRegistry.shaders.base2 = new Shader(gl, "base2");
         appRegistry.shaders.line = new Shader(gl, "line");
 
         appRegistry.glTextures.grass = createGlTexture(gl, appRegistry.textureImages.grass);

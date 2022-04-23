@@ -103,7 +103,7 @@ module.exports = class Shader {
         this.gl.linkProgram(this.shaderProgram);
 
         if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
-            console.error("Unable to initialize the shader program.");
+            console.error("Unable to initialize the shader program: " + this.gl.getProgramInfoLog(this.shaderProgram));
         }
 
         this.gl.useProgram(this.shaderProgram);
