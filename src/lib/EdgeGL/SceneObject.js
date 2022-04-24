@@ -24,6 +24,8 @@
     constructor(glContext) {
         this.gl = glContext;
 
+        this.name = '';
+
         this.verticesBuffer = null;
         this.textureCoordBuffer = null;
         this.normalBuffer = null;
@@ -42,6 +44,17 @@
 
         this.renderMode = this.gl.TRIANGLES;
         this.originalRenderMode = this.renderMode;
+    }
+
+    /**
+     * Sets the name of the SceneObject.
+     *
+     * Barely used anywhere - so far helpful for stepping through breakpoints..
+     *
+     * @param {*} name
+     */
+    setName(name) {
+        this.name = name;
     }
 
     /**

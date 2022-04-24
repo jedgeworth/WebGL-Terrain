@@ -209,6 +209,38 @@ module.exports = class Terrain {
 
 
     /**
+     * Creates a SceneObject to draw normals.
+     */
+    populateNormalDebugSceneObject(sceneObject) {
+        let bufferVertices = [];
+        let bufferColors = [];
+
+        for (let i = 0; i < this.verts.length; i += 1) {
+
+            bufferVertices.push(this.verts[i].x);
+            bufferVertices.push(this.verts[i].y);
+            bufferVertices.push(this.verts[i].z);
+
+            bufferColors.push(1.0, 0.0, 0.0);
+            bufferColors.push(1.0, 0.0, 0.0);
+            bufferColors.push(1.0, 0.0, 0.0);
+
+            bufferVertices.push(this.verts[i].x + (5.0 * this.verts[i].nx));
+            bufferVertices.push(this.verts[i].y + (5.0 * this.verts[i].ny));
+            bufferVertices.push(this.verts[i].z + (5.0 * this.verts[i].nz));
+
+            bufferColors.push(0.0, 1.0, 0.0);
+            bufferColors.push(0.0, 1.0, 0.0);
+            bufferColors.push(0.0, 1.0, 0.0);
+
+        }
+
+        sceneObject.setVertices(bufferVertices);
+        sceneObject.setColors(bufferColors);
+    }
+
+
+    /**
      * Exports terrain to a scene object.
      *
      * @param {*} sceneObject Object to populate.

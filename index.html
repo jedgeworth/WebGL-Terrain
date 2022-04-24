@@ -166,7 +166,7 @@
 
             highp vec3 lightPosition = normalize(uLight0Direction.xyz);
 
-            // If we have a normal map, get normal from that.
+            // If we have a normal map, get normal from that (instead of from the vertex).
             highp vec3 normal = v_VertexNormal;
 
             // Ambient
@@ -189,10 +189,15 @@
         }
 
         void main(void) {
-          highp vec4 texturing = texture2D(uSampler, vec2(v_TextureCoord.s, v_TextureCoord.t));
+            highp vec4 texturing = texture2D(uSampler, vec2(v_TextureCoord.s, v_TextureCoord.t));
 
-          //gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
-          gl_FragColor = texturing * lighting();
+            highp vec4 fogColor = vec4(0.8, 0.9, 1, 1);
+            highp float fogAmount = 0.0;
+
+            // Vertex normal lighting
+            //gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+
+            gl_FragColor = mix(texturing * lighting(), fogColor, fogAmount);
         }
     </script>
 

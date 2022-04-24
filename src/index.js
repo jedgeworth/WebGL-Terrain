@@ -149,10 +149,17 @@ function initBuffers(gl) {
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
+
     terrain.populateSceneObject(terrainObject);
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
     terrainObject.setTexture(appRegistry.glTextures.grass);
     appRegistry.sceneObjects.terrain = terrainObject;
+
+    const terrainNormalDebugObject = new SceneObject(gl);
+    terrainNormalDebugObject.setName("Terrain normal debug");
+    terrain.populateNormalDebugSceneObject(terrainNormalDebugObject);
+    terrainNormalDebugObject.setRenderMode(gl.LINES);
+    appRegistry.sceneObjects.terrainNormalDebug = terrainNormalDebugObject;
 
     //
     const sunLight = new Light(gl, "0");
@@ -310,7 +317,7 @@ function startGlContext() {
         gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
 
-        appRegistry.shaders.base = new Shader(gl, "base2");
+        appRegistry.shaders.base = new Shader(gl, "base");
         //appRegistry.shaders.base2 = new Shader(gl, "base2");
         appRegistry.shaders.line = new Shader(gl, "line");
 
@@ -420,6 +427,7 @@ function drawScene(gl) {
 
     appRegistry.shaders.line.use();
     appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
+    appRegistry.sceneObjects.terrainNormalDebug.render(appRegistry.shaders.line, matrices);
 
     appRegistry.shaders.base.use();
     //appRegistry.lights.light0.randomise();
@@ -427,6 +435,7 @@ function drawScene(gl) {
 
     appRegistry.sceneObjects.sunLight.render(appRegistry.shaders.base, matrices);
     appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
+
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
