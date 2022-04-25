@@ -79,8 +79,8 @@ module.exports = class Terrain {
 
         this.verts = new Array(this.heightmap.width * this.heightmap.height);
 
-        for (let x = 0; x < this.heightmap.width; x += 1) {
-            for (let z = 0; z < this.heightmap.height; z += 1) {
+        for (let z = 0; z < this.heightmap.height; z += 1) {
+            for (let x = 0; x < this.heightmap.width; x += 1) {
                 const vert = new Vector12();
                 const y = this.heightmap.heightValues[x][z];
 
@@ -118,8 +118,8 @@ module.exports = class Terrain {
      * x    x    x
      */
     createNormals() {
-        for (let x = 1; x < this.heightmap.width - 1; x += 1) {
-            for (let z = 1; z < this.heightmap.height - 1; z += 1) {
+        for (let z = 1; z < this.heightmap.height - 1; z += 1) {
+            for (let x = 1; x < this.heightmap.width - 1; x += 1) {
 
                 let top = new Vector12();
                 let bottom = new Vector12();
@@ -131,10 +131,10 @@ module.exports = class Terrain {
                 let crossLB = new Vector3();
                 let crossTL = new Vector3();
 
-                top    = this.verts[ ((z + 1) * this.heightmap.width) + x ];
-                bottom = this.verts[ ((z - 1) * this.heightmap.width) + x ];
-                left   = this.verts[ (z * this.heightmap.width) + x - 1 ];
-                right  = this.verts[ (z * this.heightmap.width) + x + 1 ];
+                top    = this.verts[ ((x + 1) * this.heightmap.width) + z ];
+                bottom = this.verts[ ((x - 1) * this.heightmap.width) + z ];
+                left   = this.verts[ (x * this.heightmap.width) + z - 1 ];
+                right  = this.verts[ (x * this.heightmap.width) + z + 1 ];
 
                 crossRT = crossVector(right, top);
                 crossTL = crossVector(top, left);

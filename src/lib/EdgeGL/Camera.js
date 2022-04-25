@@ -15,7 +15,7 @@ module.exports = class Camera {
         this.PIOVER180 = 0.0174532925;
 
         this.xPos = 0.0;
-        this.yPos = 20.0;
+        this.yPos = 0.0;
         this.zPos = 100.0;
 
         this.pitch = 0.0;

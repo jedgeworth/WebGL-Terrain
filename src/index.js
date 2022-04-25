@@ -74,19 +74,19 @@ function loadModels() {
     // Load Heightmap
     const heightmap = new Heightmap();
 
-    heightmap.initWithFaultLine(128, 128, 1, () => {
-        appRegistry.heightmaps.main = heightmap;
-        appRegistry.modelsLoaded = true;
-
-        assetsLoaded();
-    });
-
-    // heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
+    // heightmap.initWithFaultLine(128, 128, 1, () => {
     //     appRegistry.heightmaps.main = heightmap;
     //     appRegistry.modelsLoaded = true;
 
     //     assetsLoaded();
     // });
+
+    heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
+        appRegistry.heightmaps.main = heightmap;
+        appRegistry.modelsLoaded = true;
+
+        assetsLoaded();
+    });
 }
 
 /**
