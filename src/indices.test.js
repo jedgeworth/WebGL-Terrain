@@ -1,4 +1,14 @@
-const {sumTL, sumBL, sumBR, sumTR, sumAll} = require('./sum');
+const {
+    sumTL,
+    sumBL,
+    sumBR,
+    sumTR,
+    sumAll,
+    sumTM,
+    sumML,
+    sumMR,
+    sumBM
+} = require('./indices');
 
 test('Checks TL = 0 WHERE x0, z0', () => {
   expect(sumTL(0, 0, 3)).toBe(0);
@@ -55,4 +65,22 @@ test('Checks TR = 4 WHERE x0, z1', () => {
 
 test('Checks all WHERE w3', () => {
   expect(sumAll(3)).toBe("0,3,4,4,1,0,1,4,5,5,2,1,3,6,7,7,4,3,4,7,8,8,5,4");
+});
+
+
+
+test('Checks TM = 1 WHERE x1, z1', () => {
+    expect(sumTM(1, 1, 3)).toBe(1);
+});
+
+test('Checks BM = 7 WHERE x1, z1', () => {
+    expect(sumBM(1, 1, 3)).toBe(7);
+});
+
+test('Checks ML = 3 WHERE x1, z1', () => {
+    expect(sumML(1, 1, 3)).toBe(3);
+});
+
+test('Checks MR = 5 WHERE x1, z1', () => {
+    expect(sumMR(1, 1, 3)).toBe(5);
 });

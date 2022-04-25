@@ -6,6 +6,7 @@
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
 
+// These are used for finding the four corner vertices per quad for indices.
 function sumTL(x, z, w) {
   return ((z * w) + x);
 }
@@ -22,6 +23,25 @@ function sumTR(x, z, w) {
   return (z * w) + x + 1;
 }
 
+// These are used for finding the 4 neighbouring vertices for normals.
+function sumTM(x, z, w) {
+    return ((z - 1) * w) + x;
+}
+
+function sumBM(x, z, w) {
+    return ((z + 1) * w) + x;
+}
+
+function sumML(x, z, w) {
+    return (z * w) + x - 1;
+}
+
+function sumMR(x, z, w) {
+    return (z * w) + x + 1;
+}
+
+
+// Functional test to determine all 6 indices (of the corners) correctly form the index array.
 function sumAll(w) {
 
   let vars = [];
@@ -40,4 +60,14 @@ function sumAll(w) {
   return vars.join(',');
 }
 
-module.exports = {sumTL, sumBL, sumBR, sumTR, sumAll};
+module.exports = {
+    sumTL,
+    sumBL,
+    sumBR,
+    sumTR,
+    sumAll,
+    sumTM,
+    sumML,
+    sumMR,
+    sumBM,
+};

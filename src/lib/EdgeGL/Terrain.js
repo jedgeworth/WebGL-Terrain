@@ -108,6 +108,14 @@ module.exports = class Terrain {
 
     /**
      * Create surface normals.
+     *
+     * x    x    x
+     *
+     *
+     * x    x    x
+     *
+     *
+     * x    x    x
      */
     createNormals() {
         for (let x = 1; x < this.heightmap.width - 1; x += 1) {
@@ -120,22 +128,22 @@ module.exports = class Terrain {
 
                 let crossRT = new Vector3();
                 let crossBR = new Vector3();
-                let crossBL = new Vector3();
+                let crossLB = new Vector3();
                 let crossTL = new Vector3();
 
-                top    = this.verts[ (x * this.heightmap.width) + (z - 1) ];
-                bottom = this.verts[ (x * this.heightmap.width) + (z + 1) ];
-                left   = this.verts[ ((x - 1) * this.heightmap.width) + z ];
-                right  = this.verts[ ((x + 1) * this.heightmap.width) + z ];
+                top    = this.verts[ ((z + 1) * this.heightmap.width) + x ];
+                bottom = this.verts[ ((z - 1) * this.heightmap.width) + x ];
+                left   = this.verts[ (z * this.heightmap.width) + x - 1 ];
+                right  = this.verts[ (z * this.heightmap.width) + x + 1 ];
 
                 crossRT = crossVector(right, top);
                 crossTL = crossVector(top, left);
                 crossBR = crossVector(bottom, right);
-                crossBL = crossVector(bottom, left);
+                crossLB = crossVector(left, bottom);
 
                 let avg = addVector(crossRT, crossTL);
                 avg = addVector(avg, crossBR);
-                avg = addVector(avg, crossBL);
+                avg = addVector(avg, crossLB);
                 avg = divideVector(avg, 4.0);
 
                 normalizePosition(avg);

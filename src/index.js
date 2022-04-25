@@ -74,19 +74,19 @@ function loadModels() {
     // Load Heightmap
     const heightmap = new Heightmap();
 
-    // heightmap.initWithFaultLine(128, 128, 2000, () => {
-    //     appRegistry.heightmaps.main = heightmap;
-    //     appRegistry.modelsLoaded = true;
-
-    //     assetsLoaded();
-    // });
-
-    heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
+    heightmap.initWithFaultLine(128, 128, 1, () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.modelsLoaded = true;
 
         assetsLoaded();
     });
+
+    // heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
+    //     appRegistry.heightmaps.main = heightmap;
+    //     appRegistry.modelsLoaded = true;
+
+    //     assetsLoaded();
+    // });
 }
 
 /**
@@ -318,7 +318,6 @@ function startGlContext() {
         gl.frontFace(gl.CW);
 
         appRegistry.shaders.base = new Shader(gl, "base");
-        //appRegistry.shaders.base2 = new Shader(gl, "base2");
         appRegistry.shaders.line = new Shader(gl, "line");
 
         appRegistry.glTextures.grass = createGlTexture(gl, appRegistry.textureImages.grass);
@@ -360,6 +359,11 @@ function startGlContext() {
 
                 });
             });
+        });
+
+
+        document.querySelector('input[name="renderNormals"]').addEventListener('change', (event) => {
+            appRegistry.options.renderNormals = (event.target.checked);
         });
 
 
@@ -427,7 +431,11 @@ function drawScene(gl) {
 
     appRegistry.shaders.line.use();
     appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
-    appRegistry.sceneObjects.terrainNormalDebug.render(appRegistry.shaders.line, matrices);
+
+    if (appRegistry.options.renderNormals) {
+        appRegistry.sceneObjects.terrainNormalDebug.render(appRegistry.shaders.line, matrices);
+    }
+
 
     appRegistry.shaders.base.use();
     //appRegistry.lights.light0.randomise();
