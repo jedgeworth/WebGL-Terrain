@@ -80,57 +80,58 @@
     </style>
 
     <script id="base-vs" type="x-shader/x-vertex">
-        attribute highp vec3 aVertexNormal;
-        attribute highp vec3 aVertexPosition;
-        attribute highp vec2 aTextureCoord;
+        attribute highp vec3 a_VertexNormal;
+        attribute highp vec3 a_VertexPosition;
+        attribute highp vec2 a_TextureCoord;
 
-        uniform highp vec3 uLight0Ambient;
-        uniform highp vec3 uLight0Diffuse;
-        uniform highp vec3 uLight0Specular;
-        uniform highp vec3 uLight0Direction;
+        uniform highp vec3 u_Light0Ambient;
+        uniform highp vec3 u_Light0Diffuse;
+        uniform highp vec3 u_Light0Specular;
+        uniform highp vec3 u_Light0Direction;
 
-        uniform highp mat4 uNormalMatrix;
-        uniform highp mat4 uMVMatrix;
-        uniform highp mat4 uPMatrix;
+        uniform highp mat4 u_NormalMatrix;
+        uniform highp mat4 u_ModelViewMatrix;
+        uniform highp mat4 u_ProjectionMatrix;
 
-        varying highp vec2 vTextureCoord;
-        varying highp vec3 vLighting;
+        varying highp vec2 v_TextureCoord;
+        varying highp vec3 v_Lighting;
 
         void main(void) {
           gl_PointSize = 2.0;
-          gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+          gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
 
-          vTextureCoord = aTextureCoord;
+          v_TextureCoord = a_TextureCoord;
 
-          highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+          highp vec4 transformedNormal = u_NormalMatrix * vec4(a_VertexNormal, 1.0);
 
-          highp float directional = max(dot(transformedNormal.xyz, uLight0Direction), 0.0);
-          vLighting = uLight0Ambient + (uLight0Diffuse * directional);
+          highp float directional = max(dot(transformedNormal.xyz, u_Light0Direction), 0.0);
+          v_Lighting = u_Light0Ambient + (u_Light0Diffuse * directional);
         }
     </script>
 
     <script id="base-fs" type="x-shader/x-fragment">
-        varying highp vec2 vTextureCoord;
-        varying highp vec3 vLighting;
+        varying highp vec2 v_TextureCoord;
+        varying highp vec3 v_Lighting;
 
-        uniform sampler2D uSampler;
+        uniform sampler2D u_Sampler;
 
         void main(void) {
-          highp vec4 texelColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+          highp vec4 texelColor = texture2D(u_Sampler, vec2(v_TextureCoord.s, v_TextureCoord.t));
 
-          gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+          gl_FragColor = vec4(texelColor.rgb * v_Lighting, texelColor.a);
         }
     </script>
 
-    <script id="base2-vs" type="x-shader/x-vertex">#version 100
+    <script id="base2-vs" type="x-shader/x-vertex">
+        #version 100
 
-        attribute highp vec3 aVertexNormal;
-        attribute highp vec3 aVertexPosition;
-        attribute highp vec2 aTextureCoord;
+        attribute highp vec3 a_VertexNormal;
+        attribute highp vec3 a_VertexPosition;
+        attribute highp vec2 a_TextureCoord;
 
-        uniform highp mat4 uNormalMatrix;
-        uniform highp mat4 uMVMatrix;
-        uniform highp mat4 uPMatrix;
+        uniform highp mat4 u_NormalMatrix;
+        uniform highp mat4 u_ModelViewMatrix;
+        uniform highp mat4 u_ProjectionMatrix;
 
         varying highp vec2 v_TextureCoord;
         varying highp vec3 v_VertexNormal;
@@ -138,50 +139,51 @@
 
         void main(void) {
 
-            v_TextureCoord = aTextureCoord;
-            v_VertexNormal = vec3( normalize( uNormalMatrix * vec4(aVertexNormal, 1.0) ) );
+            v_TextureCoord = a_TextureCoord;
+            v_VertexNormal = vec3( normalize( u_NormalMatrix * vec4(a_VertexNormal, 1.0) ) );
 
-            v_EyeVector = vec3( normalize( -vec3(uMVMatrix * vec4(aVertexPosition, 1.0)) ) );
+            v_EyeVector = vec3( normalize( -vec3(u_ModelViewMatrix * vec4(a_VertexPosition, 1.0)) ) );
 
             gl_PointSize = 2.0;
-            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+            gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
         }
     </script>
 
-    <script id="base2-fs" type="x-shader/x-fragment">#version 100
+    <script id="base2-fs" type="x-shader/x-fragment">
+        s#version 100
 
         varying highp vec2 v_TextureCoord;
         varying highp vec3 v_VertexNormal;
         varying highp vec3 v_EyeVector;
 
-        uniform sampler2D uSampler;
-        uniform highp vec3 uLight0Ambient;
-        uniform highp vec3 uLight0Diffuse;
-        uniform highp vec3 uLight0Specular;
-        uniform highp vec3 uLight0Direction;
+        uniform sampler2D u_Sampler;
+        uniform highp vec3 u_Light0Ambient;
+        uniform highp vec3 u_Light0Diffuse;
+        uniform highp vec3 u_Light0Specular;
+        uniform highp vec3 u_Light0Direction;
 
         highp vec4 lighting() {
 
             highp vec4 color;
 
-            highp vec3 lightPosition = normalize(uLight0Direction.xyz);
+            highp vec3 lightPosition = normalize(u_Light0Direction.xyz);
 
             // If we have a normal map, get normal from that (instead of from the vertex).
             highp vec3 normal = v_VertexNormal;
 
             // Ambient
-            color = vec4(uLight0Ambient, 1.0);
+            color = vec4(u_Light0Ambient, 1.0);
 
             // Diffuse
-            highp float vertexDiffuseValue = max( dot(normal, uLight0Direction), 0.0 );
+            highp float vertexDiffuseValue = max( dot(normal, u_Light0Direction), 0.0 );
 
             color += vertexDiffuseValue;
 
             // Specular
             highp float shininess = 0.5;
 
-            highp vec3 reflectVector = normalize( -reflect(uLight0Direction, normal) );
-            highp vec4 specular = vec4(uLight0Specular, 1.0) * pow(  max( dot(reflectVector, v_EyeVector.xyz), 0.0 ), shininess  );
+            highp vec3 reflectVector = normalize( -reflect(u_Light0Direction, normal) );
+            highp vec4 specular = vec4(u_Light0Specular, 1.0) * pow(  max( dot(reflectVector, v_EyeVector.xyz), 0.0 ), shininess  );
 
             color += specular;
 
@@ -189,39 +191,38 @@
         }
 
         void main(void) {
-            highp vec4 texturing = texture2D(uSampler, vec2(v_TextureCoord.s, v_TextureCoord.t));
+            highp vec4 texturing = texture2D(u_Sampler, v_TextureCoord);
 
             highp vec4 fogColor = vec4(0.8, 0.9, 1, 1);
             highp float fogAmount = 0.0;
 
-            // Vertex normal lighting
-            //gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+            gl_FragColor = texturing * lighting();
 
-            gl_FragColor = mix(texturing * lighting(), fogColor, fogAmount);
+            //gl_FragColor = mix(lighting(), fogColor, fogAmount);
         }
     </script>
 
 
     <script id="line-vs" type="x-shader/x-vertex">
-        attribute highp vec3 aVertexPosition;
-        attribute highp vec3 aVertexColor;
+        attribute highp vec3 a_VertexPosition;
+        attribute highp vec3 a_VertexColor;
 
-        uniform highp mat4 uMVMatrix;
-        uniform highp mat4 uPMatrix;
+        uniform highp mat4 u_ModelViewMatrix;
+        uniform highp mat4 u_ProjectionMatrix;
 
-        varying highp vec3 vColor;
+        varying highp vec3 v_Color;
 
         void main(void) {
-          gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-          vColor = aVertexColor;
+          gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
+          v_Color = a_VertexColor;
         }
     </script>
 
     <script id="line-fs" type="x-shader/x-fragment">
-        varying highp vec3 vColor;
+        varying highp vec3 v_Color;
 
         void main(void) {
-          gl_FragColor = vec4(vColor.rgb, 1);
+          gl_FragColor = vec4(v_Color.rgb, 1);
         }
     </script>
 

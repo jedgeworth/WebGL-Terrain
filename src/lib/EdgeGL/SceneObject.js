@@ -216,7 +216,7 @@
         if (this.glTexture && this.textureCoordBuffer) {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTexture);
-            this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "uSampler"), 0);
+            this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_Sampler"), 0);
 
             this.gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);

@@ -60,20 +60,16 @@ module.exports = class Shader {
         let vertexShaderSource = this.readSourceFromElement(scriptElementId + "-vs");
         this.vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
 
-        if (vertexShaderSource.indexOf("aVertexColor") > 0) {
+        if (vertexShaderSource.indexOf("a_VertexColor") > 0) {
             this.hasVertexColorAttribute = true;
         }
 
-        if (vertexShaderSource.indexOf("aTextureCoord") > 0) {
+        if (vertexShaderSource.indexOf("a_TextureCoord") > 0) {
             this.hasTextureCoordAttribute = true;
         }
 
-        if (vertexShaderSource.indexOf("aTextureCoord") > 0) {
+        if (vertexShaderSource.indexOf("a_VertexNormal") > 0) {
             this.hasVertexNormalAttribute = true;
-        }
-
-        if (vertexShaderSource.indexOf("aLight0Direction") > 0) {
-            this.hasLight0Attribute = true;
         }
 
         this.gl.shaderSource(this.vertexShader, vertexShaderSource);
@@ -109,37 +105,23 @@ module.exports = class Shader {
         this.gl.useProgram(this.shaderProgram);
 
         // Combine default attributes.
-        this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
+        this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexPosition");
         this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
 
         if (this.hasVertexColorAttribute) {
-            this.vertexColorAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexColor");
+            this.vertexColorAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexColor");
             this.gl.enableVertexAttribArray(this.vertexColorAttribute);
         }
 
         if (this.hasTextureCoordAttribute) {
-            this.textureCoordAttribute = this.gl.getAttribLocation(this.shaderProgram, "aTextureCoord");
+            this.textureCoordAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_TextureCoord");
             this.gl.enableVertexAttribArray(this.textureCoordAttribute);
         }
 
         if (this.hasVertexNormalAttribute) {
-            this.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexNormal");
+            this.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexNormal");
             this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
         }
-
-        // if (this.hasLight0Attribute) {
-        //     this.light0DirectionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Direction");
-        //     this.gl.enableVertexAttribArray(this.light0DirectionAttribute);
-
-        //     this.light0AmbientAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Ambient");
-        //     this.gl.enableVertexAttribArray(this.light0AmbientAttribute);
-
-        //     this.light0DiffuseAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Diffuse");
-        //     this.gl.enableVertexAttribArray(this.light0DiffuseAttribute);
-
-        //     this.light0SpecularAttribute = this.gl.getAttribLocation(this.shaderProgram, "aLight0Specular");
-        //     this.gl.enableVertexAttribArray(this.light0SpecularAttribute);
-        // }
     }
 
     /**
@@ -165,10 +147,10 @@ module.exports = class Shader {
 
         const i = lightObject.lightIndex;
 
-        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Direction`);
-        let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Ambient`);
-        let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Diffuse`);
-        let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `uLight${i}Specular`);
+        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Direction`);
+        let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
+        let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
+        let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
 
         this.gl.uniform3fv(light0Direction, lightObject.position.flatten());
         this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
@@ -183,16 +165,16 @@ module.exports = class Shader {
      * @param {*} mvMatrix The model-view matrix.
      */
     setMatrixUniforms(perspectiveMatrix, mvMatrix) {
-        let pUniform = this.gl.getUniformLocation(this.shaderProgram, "uPMatrix");
-        let mvUniform = this.gl.getUniformLocation(this.shaderProgram, "uMVMatrix");
-        let nUniform = this.gl.getUniformLocation(this.shaderProgram, "uNormalMatrix");
+        let projectionMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ProjectionMatrix");
+        let modelViewMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ModelViewMatrix");
+        let normalMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_NormalMatrix");
 
         let normalMatrix = mvMatrix.inverse();
         normalMatrix = normalMatrix.transpose();
 
-        this.gl.uniformMatrix4fv(pUniform, false, new Float32Array(perspectiveMatrix.flatten()));
-        this.gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
-        this.gl.uniformMatrix4fv(nUniform, false, new Float32Array(normalMatrix.flatten()));
+        this.gl.uniformMatrix4fv(projectionMatrixUniform, false, new Float32Array(perspectiveMatrix.flatten()));
+        this.gl.uniformMatrix4fv(modelViewMatrixUniform, false, new Float32Array(mvMatrix.flatten()));
+        this.gl.uniformMatrix4fv(normalMatrixUniform, false, new Float32Array(normalMatrix.flatten()));
     }
 
     /**
@@ -251,7 +233,7 @@ module.exports = class Shader {
 
         while(currentChild) {
             if (currentChild.nodeType == 3) {
-                theSource += currentChild.textContent;
+                theSource += currentChild.textContent.trim();
             }
 
             currentChild = currentChild.nextSibling;
