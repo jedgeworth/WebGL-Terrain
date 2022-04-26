@@ -36,16 +36,7 @@ const Sylvester = require('sylvester-es6/src/Sylvester');
  */
 document.addEventListener("DOMContentLoaded", () => {
 
-    appRegistry.setAssetsLoadedCallback(startGlContext);
-
-    appRegistry.registerTextures({
-        'blank' : require('./assets/img/blank.png'),
-        'grass' : require('./assets/img/grass.jpg'),
-        'floor' : require('./assets/img/floor.png'),
-        'lightbulb' : require('./assets/img/lightbulb.jpg'),
-    });
-
-    loadModels();
+    startGlContext();
 
 });
 
@@ -81,48 +72,49 @@ function loadModels() {
 function initSceneObjects(gl) {
 
     const originObject = new SceneObject(gl);
+
     originObject.setPrimitive(new OriginPrimitive(gl));
-    appRegistry.sceneObjects.worldOrigin = originObject;
+
+    appRegistry.registerSceneObject('worldOrigin', originObject, 'line', 'static');
 
     //
     const floorObject = new SceneObject(gl);
+
     floorObject.setPrimitive(new QuadPlanePrimitive(gl));
     floorObject.setTexture(appRegistry.glTextures.grass);
 
     appRegistry.sceneObjects.floor = floorObject;
 
     //
+
     const terrain = new Terrain();
     terrain.setStretch(4);
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
-
     terrain.populateSceneObject(terrainObject);
+
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
     terrainObject.setTexture(appRegistry.glTextures.grass);
-    appRegistry.sceneObjects.terrain = terrainObject;
 
-    const terrainNormalDebugObject = new SceneObject(gl);
-    terrainNormalDebugObject.setName("Terrain normal debug");
-    terrain.populateNormalDebugSceneObject(terrainNormalDebugObject);
-    terrainNormalDebugObject.setRenderMode(gl.LINES);
-    appRegistry.sceneObjects.terrainNormalDebug = terrainNormalDebugObject;
+    appRegistry.registerSceneObject('terrain', terrainObject, 'base', 'static');
 
     //
-    const sunLight = new Light(gl, "0");
-    sunLight.setDirection(1.0, 1.0, 1.0);
-    sunLight.setAmbient(0.4, 0.4, 0.4);
-    sunLight.setDiffuse(0.7, 0.7, 0.7);
-    sunLight.setSpecular(0.6, 0.6, 0.6);
-    sunLight.setRenderPosition(500, 500, 500);
-    appRegistry.lights.light0 = sunLight;
+    const terrainNormalDebugObject = new SceneObject(gl);
+    terrain.populateNormalDebugSceneObject(terrainNormalDebugObject);
+
+    terrainNormalDebugObject.setRenderMode(gl.LINES);
+    terrainNormalDebugObject.setEnabled(false);
+    appRegistry.registerSceneObject('terrainNormalDebug', terrainNormalDebugObject, 'line', 'static');
+
+    //
 
     const sunLightObject = new SceneObject(gl);
     sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
     sunLightObject.setTexture(appRegistry.glTextures.lightbulb);
-    sunLight.setSceneObject(sunLightObject);
-    appRegistry.sceneObjects.sunLight = sunLightObject;
+    appRegistry.lights.light0.setSceneObject(sunLightObject);
+
+    appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -173,6 +165,39 @@ function startGlContext() {
     appRegistry.keyboardHandler.setCamera(appRegistry.camera);
 
     if (gl !== null) {
+
+        const sunLight = new Light(gl, "0");
+        sunLight.setDirection(1.0, 1.0, 1.0);
+        sunLight.setAmbient(0.4, 0.4, 0.4);
+        sunLight.setDiffuse(0.7, 0.7, 0.7);
+        sunLight.setSpecular(0.6, 0.6, 0.6);
+        sunLight.setRenderPosition(500, 500, 500);
+        appRegistry.lights.light0 = sunLight;
+
+        appRegistry.onAssetsLoaded = () => {
+            appRegistry.createGlTextures();
+
+            initSceneObjects(gl);
+            bindWebUI(gl);
+
+            setInterval(() => { drawScene(gl) }, frameRate);
+        };
+
+        appRegistry.registerTextures({
+            'blank' : require('./assets/img/blank.png'),
+            'grass' : require('./assets/img/grass.jpg'),
+            'floor' : require('./assets/img/floor.png'),
+            'lightbulb' : require('./assets/img/lightbulb.jpg'),
+        });
+
+        appRegistry.registerShaders({
+            base: "base",
+            blinnphong: "blinnphong",
+            line: "line",
+        });
+
+        loadModels();
+
         gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
         gl.clearDepth(1.0);
         gl.enable(gl.DEPTH_TEST);
@@ -181,31 +206,36 @@ function startGlContext() {
         //gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
-
-        appRegistry.registerShaders({
-            base: "base",
-            blinnphong: "blinnphong",
-            line: "line",
-        });
-
-        appRegistry.createGlTextures();
-
-        console.log(appRegistry);
-
-        initSceneObjects(gl);
-
-        setInterval(() => { drawScene(gl) }, frameRate);
-
-
-        bindWebUI();
     }
+}
+
+
+/**
+ * Allow a window rezize to resize the canvas.
+ *
+ * (src: https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)
+ */
+ function handleWindowResize(canvas) {
+
+    const displayWidth  = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+
+    const needResize = canvas.width  !== displayWidth ||
+                        canvas.height !== displayHeight;
+
+    if (needResize) {
+        canvas.width  = displayWidth;
+        canvas.height = displayHeight;
+    }
+
+    return needResize;
 }
 
 
 /**
  * Binds any web UI inputs, controls etc.
  */
-function bindWebUI() {
+function bindWebUI(gl) {
     document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
         element.addEventListener('change', (event) => {
 
@@ -230,6 +260,7 @@ function bindWebUI() {
 
     document.querySelector('input[name="renderNormals"]').addEventListener('change', (event) => {
         appRegistry.options.renderNormals = (event.target.checked);
+        appRegistry.sceneObjects.terrainNormalDebug.setEnabled(appRegistry.options.renderNormals);
     });
 
 
@@ -254,26 +285,7 @@ function bindWebUI() {
     });
 }
 
-/**
- * Allow a window rezize to resize the canvas.
- *
- * (src: https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)
- */
-function handleWindowResize(canvas) {
 
-    const displayWidth  = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-
-    const needResize = canvas.width  !== displayWidth ||
-                        canvas.height !== displayHeight;
-
-    if (needResize) {
-        canvas.width  = displayWidth;
-        canvas.height = displayHeight;
-    }
-
-    return needResize;
-}
 
 /**
  * drawScene
@@ -286,29 +298,22 @@ function drawScene(gl) {
     handleWindowResize(gl.canvas);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     matrices.loadIdentity();
     matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
+
     appRegistry.camera.update(matrices);
     appRegistry.camera.debug('cameraDebug');
 
-    appRegistry.shaders.line.use();
-    appRegistry.sceneObjects.worldOrigin.render(appRegistry.shaders.line, matrices);
+    appRegistry.shaders.base.use();
+    appRegistry.shaders.base.setLightUniforms(appRegistry.lights.light0);
+
+    appRegistry.render('static', matrices);
 
     if (appRegistry.options.renderNormals) {
         appRegistry.sceneObjects.terrainNormalDebug.render(appRegistry.shaders.line, matrices);
     }
-
-
-    appRegistry.shaders.base.use();
-    //appRegistry.lights.light0.randomise();
-    appRegistry.shaders.base.setLightUniforms(appRegistry.lights.light0);
-
-    appRegistry.sceneObjects.sunLight.render(appRegistry.shaders.base, matrices);
-    appRegistry.sceneObjects.terrain.render(appRegistry.shaders.base, matrices);
-
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
@@ -319,28 +324,8 @@ function drawScene(gl) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
         // (Call any updates on animated sceneObjects based on delta.)
+        appRegistry.render('timed', matrices, delta);
     }
 
     appRegistry.lastUpdateTime = currentTime;
-
-    drawDebug();
 }
-
-/**
- * Calls any .debug() methods to output to the page.
- */
-function drawDebug() {
-
-    //let text = `testXPos: ${testXPos}`;
-
-    //let text = '';
-    //text += `<h5>Tank</h5>${appRegistry.meshes.tank.debug()}`;
-    //document.getElementById("debug").innerHTML = text;
-
-    // let text = '';
-    // text += `<h5>Origin:</h5>${appRegistry.sceneObjects.worldOrigin.debug()}`;
-    // document.getElementById("debug").innerHTML = text;
-
-    //appRegistry.camera.debug('debug');
-}
-

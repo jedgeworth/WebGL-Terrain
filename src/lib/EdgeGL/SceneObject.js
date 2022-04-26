@@ -26,6 +26,8 @@
 
         this.name = '';
 
+        this.enabled = true;
+
         this.verticesBuffer = null;
         this.textureCoordBuffer = null;
         this.normalBuffer = null;
@@ -55,6 +57,10 @@
      */
     setName(name) {
         this.name = name;
+    }
+
+    setEnabled(isEnabled) {
+        this.enabled = isEnabled;
     }
 
     /**

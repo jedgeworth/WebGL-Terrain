@@ -22,6 +22,10 @@ I am doing this open source in the hopes it helps someone get into OpenGL progra
 * WASD camera controls to navigate the scene.
 * 3D Terrain generator and renderer.
 
+## Demo
+
+[Live demo](https://jamesedgeworth.com/demo/webgl/)
+
 ## Usage
 
 Substitute `PROJECT-NAME` for your project name.

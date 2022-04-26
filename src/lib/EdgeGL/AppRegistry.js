@@ -25,6 +25,15 @@ module.exports = class AppRegistry{
 
         this.lights = {};
 
+        /**
+         * Pairs items as {sceneObject: object, shader: shader}.
+         */
+        this.renderQueue = {
+            ortho: {},
+            static: {},
+            dynamic: {},
+        };
+
         this.lastUpdateTime = 0;
 
 
@@ -33,7 +42,7 @@ module.exports = class AppRegistry{
             texturesLoaded: false
         };
 
-        this.assetsLoadedCallback = null;
+        this.onAssetsLoaded = null;
 
         this.options = {
             isRenderModeLines: false
@@ -47,32 +56,20 @@ module.exports = class AppRegistry{
         this.gl = gl;
     }
 
-
-
-
-
-    /**
-     * Sets the function to call once all assets are loaded.
-     * @param {*} callback Callback function once all assets loaded.
-     */
-    setAssetsLoadedCallback(callback) {
-        this.assetsLoadedCallback = callback;
-    }
-
     /**
      * Called every time an asset is loaded. If all assets are loaded we then
      * call the assetsLoadedCallback.
      */
     assetsLoaded() {
 
-        if (!this.setAssetsLoadedCallback) {
+        if (!this.onAssetsLoaded) {
             throw "appRegistry: Assets Loaded Callback must be set before loading assets.";
         }
 
         if (this.assetFlags.modelsLoaded && this.assetFlags.texturesLoaded) {
 
             try {
-                this.assetsLoadedCallback();
+                this.onAssetsLoaded();
             } catch (e) {
                 console.error(e);
             }
@@ -157,6 +154,43 @@ module.exports = class AppRegistry{
     registerShaders(shaders) {
         for ( const [keyName, shaderName] of Object.entries(shaders) ) {
             this.registerShader(keyName, shaderName);
+        }
+    }
+
+
+
+
+    /**
+     * Registers a sceneObject.
+     *
+     * @param {*} sceneObject The sceneObject.
+     * @param {*} shaderObject The shader Object to render with.
+     * @param {*} renderContext Ortho, static, or timed.
+     */
+    registerSceneObject(name, sceneObject, shaderName, renderContext) {
+
+        this.sceneObjects[name] = sceneObject;
+
+        this.renderQueue[renderContext][name] = {
+            shaderObject: this.shaders[shaderName],
+            sceneObject: sceneObject,
+        };
+    }
+
+
+    /**
+     * Renders the specified object render queue.
+     * @param {*} renderContext ortho, static, or timed.
+     * @param {*} matrices Matrices, as prepared in index->drawScene.
+     * @param {*} delta If renderContext is timed, this is the delta between frames.
+     */
+    render(renderContext, matrices, delta) {
+        for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
+
+            if (objectWithShader.sceneObject.enabled) {
+                objectWithShader.shaderObject.use();
+                objectWithShader.sceneObject.render(objectWithShader.shaderObject, matrices);
+            }
         }
     }
 
