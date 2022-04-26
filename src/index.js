@@ -15,6 +15,7 @@ const appRegistry = new AppRegistry();
 const Matrices = require('./lib/EdgeGL/Matrices');
 const matrices = new Matrices();
 
+const KeyboardHandler = require('./lib/EdgeGL/KeyboardHandler');
 const Camera = require('./lib/EdgeGL/Camera');
 const Shader = require('./lib/EdgeGL/Shader');
 const SceneObject = require('./lib/EdgeGL/SceneObject');
@@ -35,36 +36,19 @@ const Sylvester = require('sylvester-es6/src/Sylvester');
  */
 document.addEventListener("DOMContentLoaded", () => {
 
-    loadTextures();
-    loadModels();
+    appRegistry.setAssetsLoadedCallback(startGlContext);
 
-});
-
-
-/**
- * Load any expected image assets.
- */
-function loadTextures() {
-    const textureAssets = {
+    appRegistry.registerTextures({
         'blank' : require('./assets/img/blank.png'),
         'grass' : require('./assets/img/grass.jpg'),
         'floor' : require('./assets/img/floor.png'),
         'lightbulb' : require('./assets/img/lightbulb.jpg'),
-    };
+    });
 
-    var countTexturesLoaded = 0;
+    loadModels();
 
-    for (let textureName in textureAssets) {
-        appRegistry.textureImages[textureName] = new Image();
-        appRegistry.textureImages[textureName].onload = function(){
-            countTexturesLoaded += 1;
-            appRegistry.texturesLoaded = (countTexturesLoaded == Object.keys(textureAssets).length);
+});
 
-            assetsLoaded();
-        }
-        appRegistry.textureImages[textureName].src = textureAssets[textureName];
-    }
-}
 
 /**
  * Load any expected model resources (.obj)
@@ -83,46 +67,10 @@ function loadModels() {
 
     heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
-        appRegistry.modelsLoaded = true;
+        appRegistry.assetFlags.modelsLoaded = true;
 
-        assetsLoaded();
+        appRegistry.assetsLoaded();
     });
-}
-
-/**
- * Called by any load*() methods. Each marks when they're complete, and
- * this ensures we only proceed when all expected assets are ready.
- */
-function assetsLoaded() {
-    if (appRegistry.modelsLoaded && appRegistry.texturesLoaded) {
-
-        try {
-            startGlContext();
-        } catch (e) {
-            console.error(e);
-        }
-
-    }
-}
-
-/**
- * Initialise WebGL on canvas.
- */
-function initWebGL(canvas) {
-    let gl = null;
-
-    try {
-        gl = canvas.getContext("experimental-webgl");
-    }
-    catch(e) {
-        console.error(e);
-    }
-
-    if (!gl) {
-        console.error("Unable to initialize WebGL.");
-    }
-
-    return gl;
 }
 
  /**
@@ -130,7 +78,7 @@ function initWebGL(canvas) {
   *
   * @param {*} gl gl context object.
   */
-function initBuffers(gl) {
+function initSceneObjects(gl) {
 
     const originObject = new SceneObject(gl);
     originObject.setPrimitive(new OriginPrimitive(gl));
@@ -189,123 +137,40 @@ function initBuffers(gl) {
 
 
 /**
- * Create a GL_TEXTURE_2D from an image file.
- *
- * @param {*} gl gl context object.
- * @param {*} textureImage Image() object.
- */
-function createGlTexture(gl, textureImage) {
-    const glTexture = gl.createTexture();
-
-    gl.bindTexture(gl.TEXTURE_2D, glTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
-    gl.bindTexture(gl.TEXTURE_2D, glTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.bindTexture(gl.TEXTURE_2D, null);
-
-    return glTexture;
-}
-
-
-/**
- * Handle keypresses.
- *
- * TODO: Move this into its own class.
- */
-const currentlyPressedKeys = {};
-
-function handleKeyDown(event) {
-    currentlyPressedKeys[event.keyCode] = true;
-}
-
-function handleKeyUp(event) {
-    currentlyPressedKeys[event.keyCode] = false;
-}
-
-function handleKeys() {
-
-    if (currentlyPressedKeys[37]) {
-      // Left cursor key
-      appRegistry.camera.yawLeft();
-    }
-    if (currentlyPressedKeys[39]) {
-      // Right cursor key
-      appRegistry.camera.yawRight();
-    }
-    if (currentlyPressedKeys[38]) {
-      // Up cursor key
-      appRegistry.camera.pitchUp();
-    }
-    if (currentlyPressedKeys[40]) {
-      // Down cursor key
-      appRegistry.camera.pitchDown();
-    }
-
-    if (currentlyPressedKeys[87]) {
-      // W
-      appRegistry.camera.moveForward();
-    }
-
-    if (currentlyPressedKeys[83]) {
-      // S
-      appRegistry.camera.moveBackward();
-    }
-
-    if (currentlyPressedKeys[65]) {
-      // A
-      appRegistry.camera.moveLeft();
-    }
-
-    if (currentlyPressedKeys[68]) {
-      // D
-      appRegistry.camera.moveRight();
-    }
-
-    if (currentlyPressedKeys[32]) {
-      // Space
-      appRegistry.camera.moveUp();
-    }
-
-    if (currentlyPressedKeys[81]) {
-      // Q
-      appRegistry.camera.moveDown();
-    }
-
-    if (currentlyPressedKeys[82]) {
-        // R
-        appRegistry.camera.incrementWalkSpeed();
-    }
-
-    if (currentlyPressedKeys[70]) {
-        // F
-        appRegistry.camera.decrementWalkSpeed();
-    }
-  }
-
-/**
  * Called once assets are loaded, we have a canvas, and we have the gl context.
  * Converts assets to GL assets, loads shaders, objects, etc.
  */
 function startGlContext() {
 
     const frameRate = 15;
-
     const canvas = document.getElementById("glcanvas");
 
     if (canvas === undefined || canvas === null) {
         throw new Error("Could not find the canvas.");
     }
 
-    const gl = initWebGL(canvas);
+    let gl = null;
+
+    try {
+        gl = canvas.getContext("experimental-webgl");
+    } catch(e) {
+        console.error(e);
+    }
+
+    if (!gl) {
+        console.error("Unable to initialize WebGL.");
+    }
+
+    appRegistry.setGlContext(gl);
+
+    //
     appRegistry.camera = new Camera();
     appRegistry.camera.setPosition(-160, 440, -63);
     appRegistry.camera.setRotation(19, -128);
+
+    //
+    appRegistry.keyboardHandler = new KeyboardHandler(window, document);
+    appRegistry.keyboardHandler.setCamera(appRegistry.camera);
 
     if (gl !== null) {
         gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
@@ -317,76 +182,76 @@ function startGlContext() {
         gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
 
-        appRegistry.shaders.base = new Shader(gl, "base2");
-        appRegistry.shaders.line = new Shader(gl, "line");
+        appRegistry.registerShaders({
+            base: "base",
+            blinnphong: "blinnphong",
+            line: "line",
+        });
 
-        appRegistry.glTextures.grass = createGlTexture(gl, appRegistry.textureImages.grass);
-        appRegistry.glTextures.blank = createGlTexture(gl, appRegistry.textureImages.blank);
-        appRegistry.glTextures.floor = createGlTexture(gl, appRegistry.textureImages.floor);
-        appRegistry.glTextures.lightbulb = createGlTexture(gl, appRegistry.textureImages.lightbulb);
+        appRegistry.createGlTextures();
 
-        initBuffers(gl);
+        console.log(appRegistry);
+
+        initSceneObjects(gl);
 
         setInterval(() => { drawScene(gl) }, frameRate);
 
-        document.onkeydown = handleKeyDown;
-        document.onkeyup = handleKeyUp;
 
-        // Prevent certain keys from scrolling the page.
-        window.addEventListener("keydown", function(e) {
-            // space and arrow keys
-            if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
-                e.preventDefault();
+        bindWebUI();
+    }
+}
+
+
+/**
+ * Binds any web UI inputs, controls etc.
+ */
+function bindWebUI() {
+    document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
+        element.addEventListener('change', (event) => {
+
+            switch (parseInt(event.target.value)) {
+                case 0: appRegistry.options.renderModeOverride = null; break;
+                case 1: appRegistry.options.renderModeOverride = gl.LINES; break;
+                case 2: appRegistry.options.renderModeOverride = gl.POINTS; break;
             }
-        }, false);
 
-        document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
-            element.addEventListener('change', (event) => {
+            Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
 
-                switch (parseInt(event.target.value)) {
-                    case 0: appRegistry.options.renderModeOverride = null; break;
-                    case 1: appRegistry.options.renderModeOverride = gl.LINES; break;
-                    case 2: appRegistry.options.renderModeOverride = gl.POINTS; break;
+                if (appRegistry.options.renderModeOverride !== null) {
+                    sceneObject.setRenderModeOverride(appRegistry.options.renderModeOverride);
+                } else {
+                    sceneObject.disableRenderModeOverride();
                 }
 
-                Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
-
-                    if (appRegistry.options.renderModeOverride !== null) {
-                        sceneObject.setRenderModeOverride(appRegistry.options.renderModeOverride);
-                    } else {
-                        sceneObject.disableRenderModeOverride();
-                    }
-
-                });
             });
         });
+    });
 
 
-        document.querySelector('input[name="renderNormals"]').addEventListener('change', (event) => {
-            appRegistry.options.renderNormals = (event.target.checked);
+    document.querySelector('input[name="renderNormals"]').addEventListener('change', (event) => {
+        appRegistry.options.renderNormals = (event.target.checked);
+    });
+
+
+    document.querySelectorAll('input[class="diffuse"]').forEach((element) => {
+        element.addEventListener('change', (event) => {
+            appRegistry.lights.light0.setDiffuse(
+                document.getElementById('diffuseR').value,
+                document.getElementById('diffuseG').value,
+                document.getElementById('diffuseB').value,
+            );
         });
+    });
 
-
-        document.querySelectorAll('input[class="diffuse"]').forEach((element) => {
-            element.addEventListener('change', (event) => {
-                appRegistry.lights.light0.setDiffuse(
-                    document.getElementById('diffuseR').value,
-                    document.getElementById('diffuseG').value,
-                    document.getElementById('diffuseB').value,
-                );
-            });
+    document.querySelectorAll('input[class="specular"]').forEach((element) => {
+        element.addEventListener('change', (event) => {
+            appRegistry.lights.light0.setSpecular(
+                document.getElementById('specularR').value,
+                document.getElementById('specularG').value,
+                document.getElementById('specularB').value,
+            );
         });
-
-        document.querySelectorAll('input[class="specular"]').forEach((element) => {
-            element.addEventListener('change', (event) => {
-                appRegistry.lights.light0.setSpecular(
-                    document.getElementById('specularR').value,
-                    document.getElementById('specularG').value,
-                    document.getElementById('specularB').value,
-                );
-            });
-        });
-    }
+    });
 }
 
 /**
@@ -417,7 +282,7 @@ function handleWindowResize(canvas) {
  */
 function drawScene(gl) {
 
-    handleKeys();
+    appRegistry.keyboardHandler.handleKeys();
     handleWindowResize(gl.canvas);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);

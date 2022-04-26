@@ -147,7 +147,7 @@ module.exports = class Shader {
 
         const i = lightObject.lightIndex;
 
-        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Direction`);
+        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Position`);
         let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
         let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
         let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
