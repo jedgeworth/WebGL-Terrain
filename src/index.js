@@ -210,7 +210,8 @@ function startGlContext() {
 
         loadModels();
 
-        gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
+        //gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
+        gl.clearColor(0.8, 0.9, 1.0, 1.0);
         gl.clearDepth(1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
@@ -303,6 +304,13 @@ function bindWebUI(gl) {
                 document.getElementById('sunPosY').value,
                 document.getElementById('sunPosZ').value,
             );
+        });
+    });
+
+    document.querySelectorAll('input[class="fog"]').forEach((element) => {
+        element.addEventListener('change', (event) => {
+            appRegistry.fogSettings.near = document.getElementById('fogNear').value;
+            appRegistry.fogSettings.far = document.getElementById('fogFar').value;
         });
     });
 }

@@ -25,6 +25,12 @@ module.exports = class AppRegistry{
 
         this.lights = {};
 
+        this.fogSettings = {
+            color: [0.8, 0.9, 1.0, 1.0],
+            near: 1000,
+            far: 5000.0,
+        };
+
         /**
          * Pairs items as {sceneObject: object, shader: shader}.
          */
@@ -193,7 +199,11 @@ module.exports = class AppRegistry{
                 if (objectWithShader.sceneObject.enabled) {
                     objectWithShader.shaderObject.use();
                     objectWithShader.shaderObject.setLightUniforms(this.lights.light0);
-                    objectWithShader.shaderObject.setMatrixUniforms(this.camera.matrices.perspectiveMatrix, this.camera.matrices.mvMatrix);
+                    objectWithShader.shaderObject.setFogUniforms(this.fogSettings);
+                    objectWithShader.shaderObject.setMatrixUniforms(
+                        this.camera.matrices.perspectiveMatrix,
+                        this.camera.matrices.mvMatrix
+                    );
 
                     objectWithShader.sceneObject.render(objectWithShader.shaderObject, this.camera);
                 }

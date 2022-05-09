@@ -155,6 +155,19 @@ module.exports = class Shader {
         this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
     }
 
+    /**
+     * Sets fog settings.
+     */
+    setFogUniforms(fogSettings) {
+        let fogColorUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogColor");
+        let fogNearUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogNear");
+        let fogFarUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogFar");
+
+        this.gl.uniform4fv(fogColorUniform, fogSettings.color);
+        this.gl.uniform1f(fogNearUniform, fogSettings.near);
+        this.gl.uniform1f(fogFarUniform, fogSettings.far);
+    }
+
 
     /**
      * Sets the perspective matrix, and model-view matrix on the shader program.

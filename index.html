@@ -98,19 +98,16 @@
         varying vec3 v_Lighting;
         varying vec3 v_Normal;
         varying vec3 v_EyeVec;
+        varying float v_FogDepth;
 
         void main(void) {
 
-            //Transformed vertex position
             vec4 vertex = u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
-
-            //Transformed normal position
             v_Normal = vec3(u_NormalMatrix * vec4(a_VertexNormal, 1.0));
-
-            // Eye vector
             v_EyeVec = vec3(vertex.xyz);
 
             v_TextureCoord = a_TextureCoord;
+            v_FogDepth = (u_ProjectionMatrix * vertex).z;
 
             //
             gl_PointSize = 2.0;
@@ -134,10 +131,15 @@
         const vec4 u_MaterialDiffuse = vec4(0.5, 0.8, 0.1, 1.0);
         const vec4 u_MaterialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 
+        uniform vec4 u_FogColor;
+        uniform float u_FogNear;
+        uniform float u_FogFar;
+
         varying vec2 v_TextureCoord;
         varying vec3 v_Lighting;
         varying vec3 v_Normal;
         varying vec3 v_EyeVec;
+        varying float v_FogDepth;
 
         void main(void) {
 
@@ -159,8 +161,12 @@
           }
 
 
-          vec4 finalColor = texture2D(u_TextureNormal0, v_TextureCoord);
+          vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
           finalColor = finalColor * (Ia + Id) + Is;
+
+          float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
+
+          finalColor = mix( finalColor, u_FogColor, fogAmount );
 
           gl_FragColor = finalColor;
         }
@@ -448,6 +454,7 @@
                 <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularB" name="specularB" value="0.6">
             </label>
 
+            <br>
             <label>
                 X
                 <input class="sunPos" type="text" id="sunPosX" name="sunPosX" value="1.0">
@@ -455,7 +462,7 @@
 
             <label>
                 Y
-                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="1.0">
+                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="-1.0">
             </label>
 
             <label>
@@ -463,6 +470,16 @@
                 <input class="sunPos" type="text" id="sunPosZ" name="sunPosZ" value="1.0">
             </label>
 
+            <h3>Fog</h3>
+            <label>
+                Near
+                <input class="fog" type="text" id="fogNear" name="fogNear" value="1000">
+            </label>
+
+            <label>
+                Far
+                <input class="fog" type="text" id="fogFar" name="fogFar" value="5000.0">
+            </label>
 
             <div id="cameraDebug"></div>
         </div>
