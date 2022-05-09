@@ -12,9 +12,6 @@ require('./styles/index.scss');
 const AppRegistry = require('./lib/EdgeGL/AppRegistry');
 const appRegistry = new AppRegistry();
 
-const Matrices = require('./lib/EdgeGL/Matrices');
-const matrices = new Matrices();
-
 const KeyboardHandler = require('./lib/EdgeGL/KeyboardHandler');
 const Camera = require('./lib/EdgeGL/Camera');
 const Shader = require('./lib/EdgeGL/Shader');
@@ -24,6 +21,7 @@ const Light = require('./lib/EdgeGL/Light');
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
 const CubePrimitive = require('./lib/EdgeGL/Primitives/CubePrimitive');
+const LinePrimitive = require('./lib/EdgeGL/Primitives/LinePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
@@ -51,9 +49,9 @@ function loadModels() {
 
     // heightmap.initWithFaultLine(128, 128, 1, () => {
     //     appRegistry.heightmaps.main = heightmap;
-    //     appRegistry.modelsLoaded = true;
+    //     appRegistry.assetFlags.modelsLoaded = true;
 
-    //     assetsLoaded();
+    //     appRegistry.assetsLoaded();
     // });
 
     heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
@@ -80,22 +78,27 @@ function initSceneObjects(gl) {
     //
     const floorObject = new SceneObject(gl);
 
-    floorObject.setPrimitive(new QuadPlanePrimitive(gl));
-    floorObject.setTexture(appRegistry.glTextures.grass);
+    floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+    floorObject.setTexture(appRegistry.glTextures.grassPurpleFlowers);
 
-    appRegistry.sceneObjects.floor = floorObject;
+    appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
 
     //
-
     const terrain = new Terrain();
-    terrain.setStretch(4);
+    terrain.setStretch(8);
     terrain.initWithHeightmap(appRegistry.heightmaps.main);
 
     const terrainObject = new SceneObject(gl);
     terrain.populateSceneObject(terrainObject);
 
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
-    terrainObject.setTexture(appRegistry.glTextures.grass);
+    // terrainObject.setTexture(
+    //     appRegistry.glTextures.grass
+    // );
+    terrainObject.setTexture(
+        appRegistry.glTextures.grassPurpleFlowers,
+        appRegistry.glTextures.grassPurpleFlowers_n
+    );
 
     appRegistry.registerSceneObject('terrain', terrainObject, 'base', 'static');
 
@@ -108,13 +111,17 @@ function initSceneObjects(gl) {
     appRegistry.registerSceneObject('terrainNormalDebug', terrainNormalDebugObject, 'line', 'static');
 
     //
-
     const sunLightObject = new SceneObject(gl);
     sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
     sunLightObject.setTexture(appRegistry.glTextures.lightbulb);
     appRegistry.lights.light0.setSceneObject(sunLightObject);
 
     appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
+
+    const sunLightVectorObject = new SceneObject(gl);
+    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 25.0));
+
+    appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -134,7 +141,7 @@ function initSceneObjects(gl) {
  */
 function startGlContext() {
 
-    const frameRate = 15;
+    //const frameRate = 15;
     const canvas = document.getElementById("glcanvas");
 
     if (canvas === undefined || canvas === null) {
@@ -167,7 +174,7 @@ function startGlContext() {
     if (gl !== null) {
 
         const sunLight = new Light(gl, "0");
-        sunLight.setDirection(1.0, 1.0, 1.0);
+        sunLight.setDirection(1.0, -1.0, 1.0);
         sunLight.setAmbient(0.4, 0.4, 0.4);
         sunLight.setDiffuse(0.7, 0.7, 0.7);
         sunLight.setSpecular(0.6, 0.6, 0.6);
@@ -180,20 +187,25 @@ function startGlContext() {
             initSceneObjects(gl);
             bindWebUI(gl);
 
-            setInterval(() => { drawScene(gl) }, frameRate);
+            requestAnimationFrame(() => drawScene(gl));
+
+            //setInterval(() => { drawScene(gl) }, frameRate);
         };
 
         appRegistry.registerTextures({
             'blank' : require('./assets/img/blank.png'),
             'grass' : require('./assets/img/grass.jpg'),
+            'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
+            'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
             'floor' : require('./assets/img/floor.png'),
             'lightbulb' : require('./assets/img/lightbulb.jpg'),
         });
 
         appRegistry.registerShaders({
-            base: "base",
-            blinnphong: "blinnphong",
             line: "line",
+            base: "base",
+            normalmapping: "normalmapping",
+            //terrain: "terrain",
         });
 
         loadModels();
@@ -283,6 +295,16 @@ function bindWebUI(gl) {
             );
         });
     });
+
+    document.querySelectorAll('input[class="sunPos"]').forEach((element) => {
+        element.addEventListener('change', (event) => {
+            appRegistry.lights.light0.setPosition(
+                document.getElementById('sunPosX').value,
+                document.getElementById('sunPosY').value,
+                document.getElementById('sunPosZ').value,
+            );
+        });
+    });
 }
 
 
@@ -300,20 +322,11 @@ function drawScene(gl) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    matrices.loadIdentity();
-    matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
-
-    appRegistry.camera.update(matrices);
+    appRegistry.camera.update();
     appRegistry.camera.debug('cameraDebug');
 
-    appRegistry.shaders.base.use();
-    appRegistry.shaders.base.setLightUniforms(appRegistry.lights.light0);
+    appRegistry.render('static');
 
-    appRegistry.render('static', matrices);
-
-    if (appRegistry.options.renderNormals) {
-        appRegistry.sceneObjects.terrainNormalDebug.render(appRegistry.shaders.line, matrices);
-    }
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
     // appRegistry.meshes.tank.render(appRegistry.shaders.base);
@@ -324,8 +337,10 @@ function drawScene(gl) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
         // (Call any updates on animated sceneObjects based on delta.)
-        appRegistry.render('timed', matrices, delta);
+        appRegistry.render('timed', delta);
     }
 
     appRegistry.lastUpdateTime = currentTime;
+
+    requestAnimationFrame(() => drawScene(gl));
 }

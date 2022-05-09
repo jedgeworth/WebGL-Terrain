@@ -36,6 +36,7 @@
         this.numItems = 0;
 
         this.glTexture = null;
+        this.glTextureNormalMap = null;
 
         this.position = new Sylvester.Vector([0.0, 0.0, 0.0]);
         this.pitch = 0.0;
@@ -125,8 +126,17 @@
      * Set the texture object.
      * @param {*} texture GL_TEXTURE_2D object.
      */
-    setTexture(texture) {
+    setTexture(texture, normalMap) {
+
+        if (texture === undefined) {
+            throw "SceneObject: Trying to set a texture that is undefined.";
+        }
+
         this.glTexture = texture;
+
+        if (normalMap !== undefined) {
+            this.glTextureNormalMap = normalMap;
+        }
     }
 
     /**
@@ -181,6 +191,38 @@
         }
     }
 
+
+    checkBuffers(shaderProgram) {
+
+        if (!shaderProgram) {
+            console.log(`Trying to check buffers when sceneObject ${this.name} doesn't have a shader attached.`);
+            return;
+        }
+        if (shaderProgram.hasVertexPositionAttribute) {
+            if (!this.verticesBuffer) {
+                console.log(`Shader for ${this.name} has a vertex attribute but will not be bound.`);
+            }
+        }
+
+        if (shaderProgram.hasVertexColorAttribute) {
+            if (!this.colorBuffer) {
+                console.log(`Shader for ${this.name} has a color attribute but will not be bound.`);
+            }
+        }
+
+        if (shaderProgram.hasVertexNormalAttribute) {
+            if (!this.normalBuffer) {
+                console.log(`Shader for ${this.name} has a normal attribute but will not be bound.`);
+            }
+        }
+
+        if (shaderProgram.hasTextureCoordAttribute) {
+            if (!this.verticesBuffer) {
+                console.log(`Shader for ${this.name} has a texture coord attribute but will not be bound.`);
+            }
+        }
+    }
+
     /**
      * Call this to flip the SceneObject upside-down.
      */
@@ -192,37 +234,47 @@
      * Called each frame during the game loop to render the scene object.
      * @param {*} shaderProgram EdgeGL/Shader object to use for rendering.
      */
-    render(shaderProgram, matrices) {
+    render(shaderProgram, activeCamera) {
 
-        matrices.mvPushMatrix();
+        activeCamera.matrices.mvPushMatrix();
 
-        matrices.mvTranslate(this.position.elements);
-        matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
+        activeCamera.matrices.mvTranslate(this.position.elements);
+        activeCamera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
-        shaderProgram.setMatrixUniforms(matrices.perspectiveMatrix, matrices.mvMatrix);
+        this.checkBuffers(shaderProgram);
+
+
         shaderProgram.enableAttributes();
 
         // Vertices
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.verticesBuffer);
-        this.gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        if (this.verticesBuffer && shaderProgram.hasVertexPositionAttribute) {
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.verticesBuffer);
+            this.gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        }
 
         // Normals
-        if (this.normalBuffer) {
+        if (this.normalBuffer && shaderProgram.hasVertexNormalAttribute) {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
             this.gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
         }
 
         // Colors
-        if (this.colorBuffer) {
+        if (this.colorBuffer && shaderProgram.hasVertexColorAttribute) {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
             this.gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 3, this.gl.FLOAT, false, 0, 0);
         }
 
         // Textures
-        if (this.glTexture && this.textureCoordBuffer) {
+        if (this.glTexture && shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTexture);
-            this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_Sampler"), 0);
+            this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_Texture0"), 0);
+
+            if (this.glTextureNormalMap) {
+                this.gl.activeTexture(this.gl.TEXTURE1);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTextureNormalMap);
+                this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_TextureNormal0"), 0);
+            }
 
             this.gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
@@ -239,7 +291,7 @@
             this.gl.drawArrays(this.renderMode, 0, this.numItems);
         }
 
-        matrices.mvPopMatrix();
+        activeCamera.matrices.mvPopMatrix();
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 

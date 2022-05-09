@@ -7,6 +7,9 @@
  */
 
  const Sylvester = require('sylvester-es6/src/Sylvester');
+
+ const Matrices = require('./Matrices');
+
 module.exports = class Camera {
 
     constructor() {
@@ -20,6 +23,8 @@ module.exports = class Camera {
 
         this.pitch = 0.0;
         this.yaw = 0.0;
+
+        this.matrices = new Matrices();
     }
 
     /**
@@ -147,7 +152,7 @@ module.exports = class Camera {
     /**
      * Called per frame to update the scene with the current camera position/rotation.
      */
-    update(matrices) {
+    update() {
         let xTrans, yTrans, zTrans;
 
         xTrans = -this.xPos;
@@ -156,10 +161,13 @@ module.exports = class Camera {
 
         let yRot = 360.0 - this.yaw;
 
-        matrices.mvRotate(this.pitch, [this.TURNSPEED, 0, 0]);
-        matrices.mvRotate(yRot, [0, this.TURNSPEED, 0]);
+        this.matrices.loadIdentity();
+        this.matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
 
-        matrices.mvTranslate([xTrans, yTrans, zTrans]);
+        this.matrices.mvRotate(this.pitch, [this.TURNSPEED, 0, 0]);
+        this.matrices.mvRotate(yRot, [0, this.TURNSPEED, 0]);
+
+        this.matrices.mvTranslate([xTrans, yTrans, zTrans]);
     }
 
     /**

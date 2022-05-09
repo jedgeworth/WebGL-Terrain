@@ -19,6 +19,7 @@ module.exports = class Shader {
     constructor(glContext, scriptElementId) {
         this.gl = glContext;
 
+        this.name = scriptElementId;
         this.vertexShader = null;
         this.fragmentShader = null;
 
@@ -29,16 +30,10 @@ module.exports = class Shader {
         this.vertexNormalAttribute = null;
         this.vertexColorAttribute = null;
 
-        // this.light0DirectionAttribute = null;
-        // this.light0AmbientAttribute = null;
-        // this.light0DiffuseAttribute = null;
-        // this.light0SpecularAttribute = null;
-
+        this.hasVertexPositionAttribute = false;
         this.hasVertexColorAttribute = false;
         this.hasVertexNormalAttribute = false;
         this.hasTextureCoordAttribute = false;
-
-        //this.hasLight0Attribute = false;
 
         this.compile(scriptElementId);
     }
@@ -59,6 +54,10 @@ module.exports = class Shader {
         // Vertex shader
         let vertexShaderSource = this.readSourceFromElement(scriptElementId + "-vs");
         this.vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
+
+        if (vertexShaderSource.indexOf("a_VertexPosition") > 0) {
+            this.hasVertexPositionAttribute = true;
+        }
 
         if (vertexShaderSource.indexOf("a_VertexColor") > 0) {
             this.hasVertexColorAttribute = true;
@@ -105,22 +104,20 @@ module.exports = class Shader {
         this.gl.useProgram(this.shaderProgram);
 
         // Combine default attributes.
-        this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexPosition");
-        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
+        if (this.hasVertexPositionAttribute) {
+            this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexPosition");
+        }
 
         if (this.hasVertexColorAttribute) {
             this.vertexColorAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexColor");
-            this.gl.enableVertexAttribArray(this.vertexColorAttribute);
         }
 
         if (this.hasTextureCoordAttribute) {
             this.textureCoordAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_TextureCoord");
-            this.gl.enableVertexAttribArray(this.textureCoordAttribute);
         }
 
         if (this.hasVertexNormalAttribute) {
             this.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgram, "a_VertexNormal");
-            this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
         }
     }
 
@@ -165,6 +162,7 @@ module.exports = class Shader {
      * @param {*} mvMatrix The model-view matrix.
      */
     setMatrixUniforms(perspectiveMatrix, mvMatrix) {
+
         let projectionMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ProjectionMatrix");
         let modelViewMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ModelViewMatrix");
         let normalMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_NormalMatrix");
@@ -181,7 +179,9 @@ module.exports = class Shader {
      * Enables shader attributes.
      */
     enableAttributes() {
-        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
+        if (this.hasVertexPositionAttribute) {
+            this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
+        }
 
         if (this.hasVertexColorAttribute) {
             this.gl.enableVertexAttribArray(this.vertexColorAttribute);
@@ -200,7 +200,10 @@ module.exports = class Shader {
      * Disables shader attributes.
      */
     disableAttributes() {
-        this.gl.disableVertexAttribArray(this.vertexPositionAttribute);
+        if (this.hasVertexPositionAttribute) {
+            this.gl.disableVertexAttribArray(this.vertexPositionAttribute);
+        }
+
         if (this.hasVertexColorAttribute) {
             this.gl.disableVertexAttribArray(this.vertexColorAttribute);
         }

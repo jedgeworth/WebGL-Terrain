@@ -170,6 +170,7 @@ module.exports = class AppRegistry{
     registerSceneObject(name, sceneObject, shaderName, renderContext) {
 
         this.sceneObjects[name] = sceneObject;
+        sceneObject.setName(name);
 
         this.renderQueue[renderContext][name] = {
             shaderObject: this.shaders[shaderName],
@@ -184,14 +185,21 @@ module.exports = class AppRegistry{
      * @param {*} matrices Matrices, as prepared in index->drawScene.
      * @param {*} delta If renderContext is timed, this is the delta between frames.
      */
-    render(renderContext, matrices, delta) {
-        for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
+    render(renderContext, delta) {
 
-            if (objectWithShader.sceneObject.enabled) {
-                objectWithShader.shaderObject.use();
-                objectWithShader.sceneObject.render(objectWithShader.shaderObject, matrices);
+        if (this.renderQueue[renderContext] !== undefined) {
+            for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
+
+                if (objectWithShader.sceneObject.enabled) {
+                    objectWithShader.shaderObject.use();
+                    objectWithShader.shaderObject.setLightUniforms(this.lights.light0);
+                    objectWithShader.shaderObject.setMatrixUniforms(this.camera.matrices.perspectiveMatrix, this.camera.matrices.mvMatrix);
+
+                    objectWithShader.sceneObject.render(objectWithShader.shaderObject, this.camera);
+                }
             }
         }
+
     }
 
 }
