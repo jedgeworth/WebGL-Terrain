@@ -24,6 +24,13 @@ module.exports = class QuadPlanePrimitive {
                 -w,  w, 0.0,    //TL V3
             ];
 
+            this.normals = [
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+            ];
+
         } else {
             this.vertices = [
                 // Bottom face
@@ -32,17 +39,16 @@ module.exports = class QuadPlanePrimitive {
                  w, 0.0,  w,    //TR V2
                 -w, 0.0,  w,    //TL V3
             ];
+
+            this.normals = [
+                // Bottom
+                0.0, 1.0,  0.0,
+                0.0, 1.0,  0.0,
+                0.0, 1.0,  0.0,
+                0.0, 1.0,  0.0,
+            ];
         }
 
-
-
-        this.normals = [
-            // Bottom
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-            0.0, -1.0,  0.0,
-        ];
 
         this.texCoords = [
             // Bottom

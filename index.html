@@ -85,6 +85,9 @@
         attribute vec3 a_VertexPosition;
         attribute vec2 a_TextureCoord;
 
+        uniform bool u_UseLighting;
+        uniform bool u_UseFog;
+
         uniform vec3 u_Light0Ambient;
         uniform vec3 u_Light0Diffuse;
         uniform vec3 u_Light0Specular;
@@ -123,14 +126,21 @@
         uniform sampler2D u_Texture0;
         uniform sampler2D u_TextureNormal0;
 
+        uniform sampler2D u_Texture1;
+        uniform sampler2D u_TextureNormal1;
+
+        uniform bool u_UseNormalMapping;
+        uniform bool u_UseLighting;
+        uniform bool u_UseFog;
+
         uniform vec3 u_Light0Ambient;
         uniform vec3 u_Light0Diffuse;
         uniform vec3 u_Light0Specular;
         uniform vec3 u_Light0Position;
 
-        const float u_Shininess = 100.0;
+        const float u_Shininess = 200.0;
         const vec4 u_MaterialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
-        const vec4 u_MaterialDiffuse = vec4(0.5, 0.8, 0.1, 1.0);
+        const vec4 u_MaterialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
         const vec4 u_MaterialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 
         uniform vec4 u_FogColor;
@@ -144,122 +154,56 @@
         varying vec3 v_EyeVec;
         varying float v_FogDepth;
 
+
+        vec4 lighting() {
+
+            vec3 L = normalize( u_Light0Position );
+            vec3 N = normalize( v_Normal );
+
+            if (u_UseNormalMapping) {
+                vec3 fragmentNormal = normalize( texture2D(u_Texture1, v_TextureCoord).rgb * 2.0 - 1.0 ) * -1.0;
+                N = normalize(fragmentNormal * v_Normal);
+            }
+
+            float lambertTerm = dot(N, L);
+
+            vec4 Ia = vec4(u_Light0Ambient, 1.0) * u_MaterialAmbient;
+            vec4 Id = vec4(0.0, 0.0, 0.0, 1.0);
+            vec4 Is = vec4(0.0, 0.0, 0.0, 1.0);
+
+            if (lambertTerm > 0.0) {
+                Id = vec4(u_Light0Diffuse, 1.0) * u_MaterialDiffuse * lambertTerm;
+                vec3 E = normalize( v_EyeVec );
+                vec3 R = reflect(L, N);
+                float specular = pow( max( dot(R, E), 0.0 ), u_Shininess );
+                Is = vec4(u_Light0Specular, 1.0) * u_MaterialSpecular * specular;
+            }
+
+            return (Ia + Id) + Is;
+        }
+
+        vec4 fog(vec4 inFinalColor) {
+            float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
+            return mix( inFinalColor, u_FogColor, fogAmount );
+        }
+
         void main(void) {
 
-          vec3 L = normalize( u_Light0Position );
-          vec3 N = normalize( v_Normal );
+          vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
 
-          float lambertTerm = dot(N, L);
-
-          vec4 Ia = vec4(u_Light0Ambient, 1.0) * u_MaterialAmbient;
-          vec4 Id = vec4(0.0, 0.0, 0.0, 1.0);
-          vec4 Is = vec4(0.0, 0.0, 0.0, 1.0);
-
-          if (lambertTerm > 0.0) {
-              Id = vec4(u_Light0Diffuse, 1.0) * u_MaterialDiffuse * lambertTerm;
-              vec3 E = normalize( v_EyeVec );
-              vec3 R = reflect(L, N);
-              float specular = pow( max( dot(R, E), 0.0 ), u_Shininess );
-              Is = vec4(u_Light0Specular, 1.0) * u_MaterialSpecular * specular;
+          if (u_UseLighting) {
+            finalColor = finalColor * lighting();
           }
 
-
-          vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
-          finalColor = finalColor * (Ia + Id) + Is;
-
-          float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
-
-          finalColor = mix( finalColor, u_FogColor, fogAmount );
+          if (u_UseFog) {
+            finalColor = fog(finalColor);
+          }
 
           //if (v_RawNormal.y < .85 && v_RawNormal.x < .85 && v_RawNormal.z < .85) {
           //    finalColor.r = 255.0;
           //}
 
           gl_FragColor = finalColor;
-        }
-    </script>
-
-    <script id="normalmapping-vs" type="x-shader/x-vertex">
-        #version 100
-
-        precision highp float;
-
-        attribute vec3 a_VertexNormal;
-        attribute vec3 a_VertexPosition;
-        attribute vec2 a_TextureCoord;
-
-        uniform mat4 u_NormalMatrix;
-        uniform mat4 u_ModelViewMatrix;
-        uniform mat4 u_ProjectionMatrix;
-
-        varying vec2 v_TextureCoord;
-        varying vec3 v_VertexNormal;
-        varying vec3 v_EyeVector;
-
-        void main(void) {
-
-            v_TextureCoord = a_TextureCoord;
-            v_VertexNormal = vec3( normalize( u_NormalMatrix * vec4(a_VertexNormal, 1.0) ) );
-
-            v_EyeVector = vec3( normalize( -vec3(u_ModelViewMatrix * vec4(a_VertexPosition, 1.0)) ) );
-
-            gl_PointSize = 2.0;
-            gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
-        }
-    </script>
-
-    <script id="normalmapping-fs" type="x-shader/x-fragment">
-        #version 100
-
-        precision highp float;
-
-        varying vec2 v_TextureCoord;
-        varying vec3 v_VertexNormal;
-        varying vec3 v_EyeVector;
-
-        uniform sampler2D u_Texture0;
-        uniform mat4 u_NormalMatrix;
-        uniform mat4 u_ModelViewMatrix;
-        uniform mat4 u_ProjectionMatrix;
-        uniform vec3 u_Light0Ambient;
-        uniform vec3 u_Light0Diffuse;
-        uniform vec3 u_Light0Specular;
-        uniform vec3 u_Light0Position;
-
-        vec4 lighting() {
-
-            vec4 color;
-            vec3 lightPosition = normalize(u_Light0Position.xyz);
-            vec3 normal = v_VertexNormal;
-
-            // Ambient
-            color = vec4(u_Light0Ambient, 1.0);
-
-            // Diffuse
-            float vertexDiffuseValue = max( dot(normal, u_Light0Position), 0.0 );
-
-            color += vertexDiffuseValue;
-
-            // Specular
-            float shininess = 0.5;
-
-            vec3 reflectVector = normalize( -reflect(u_Light0Position, normal) );
-            vec4 specular = vec4(u_Light0Specular, 1.0) * pow(  max( dot(reflectVector, v_EyeVector.xyz), 0.0 ), shininess  );
-
-            color += specular;
-
-            return color;
-        }
-
-        void main(void) {
-            vec4 texturing = texture2D(u_Texture0, v_TextureCoord);
-
-            vec4 fogColor = vec4(0.8, 0.9, 1, 1);
-            float fogAmount = 0.0;
-
-            gl_FragColor = texturing * lighting();
-
-            //gl_FragColor = mix(lighting(), fogColor, fogAmount);
         }
     </script>
 
@@ -464,17 +408,17 @@
             <br>
             <label>
                 X
-                <input class="sunPos" type="text" id="sunPosX" name="sunPosX" value="1.0">
+                <input class="sunPos" type="text" id="sunPosX" name="sunPosX" value="1000.0">
             </label>
 
             <label>
                 Y
-                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="-1.0">
+                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="1000.0">
             </label>
 
             <label>
                 Z
-                <input class="sunPos" type="text" id="sunPosZ" name="sunPosZ" value="1.0">
+                <input class="sunPos" type="text" id="sunPosZ" name="sunPosZ" value="1000.0">
             </label>
 
             <h3>Fog</h3>

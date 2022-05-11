@@ -45,6 +45,14 @@ module.exports = class Light {
         this.position.x = x;
         this.position.y = y;
         this.position.z = z;
+
+        if (this.sceneObject !== null) {
+            this.sceneObject.setPositionArray([
+                this.position.x,
+                this.position.y,
+                this.position.z
+            ]);
+        }
     }
 
     /**
@@ -123,9 +131,11 @@ module.exports = class Light {
         this.renderPosition.z = z;
 
         if (this.sceneObject !== null) {
-            sceneObject.position.x = this.renderPosition.x;
-            sceneObject.position.y = this.renderPosition.y;
-            sceneObject.position.z = this.renderPosition.z;
+            this.sceneObject.setPositionArray([
+                this.renderPosition.x,
+                this.renderPosition.y,
+                this.renderPosition.z
+            ]);
         }
     }
 
@@ -143,13 +153,17 @@ module.exports = class Light {
         this.sceneObject = sceneObject;
 
         if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0) {
-            sceneObject.position.x = this.renderPosition.x;
-            sceneObject.position.y = this.renderPosition.y;
-            sceneObject.position.z = this.renderPosition.z;
+            this.sceneObject.setPositionArray([
+                this.renderPosition.x,
+                this.renderPosition.y,
+                this.renderPosition.z
+            ]);
         } else {
-            sceneObject.position.x = this.position.x;
-            sceneObject.position.y = this.position.y;
-            sceneObject.position.z = this.position.z;
+            this.sceneObject.setPositionArray([
+                this.position.x,
+                this.position.y,
+                this.position.z
+            ]);
         }
 
     }

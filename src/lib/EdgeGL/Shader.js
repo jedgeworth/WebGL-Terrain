@@ -140,32 +140,49 @@ module.exports = class Shader {
      * Sets lighting from a Light().
      * @param {*} lightObject Instantiated Light() object.
      */
-    setLightUniforms(lightObject) {
+    setLightUniforms(lightObject, enabled) {
 
-        const i = lightObject.lightIndex;
+        let useLighting = this.gl.getUniformLocation(this.shaderProgram, 'u_UseLighting');
 
-        let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Position`);
-        let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
-        let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
-        let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
+        if (enabled) {
+            const i = lightObject.lightIndex;
 
-        this.gl.uniform3fv(light0Direction, lightObject.position.flatten());
-        this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
-        this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
-        this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
+            let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Position`);
+            let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
+            let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
+            let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
+
+
+            this.gl.uniform1i(useLighting, 1);
+            this.gl.uniform3fv(light0Direction, lightObject.position.flatten());
+            this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
+            this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
+            this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
+        } else {
+            this.gl.uniform1i(useLighting, 0);
+        }
+
     }
 
     /**
      * Sets fog settings.
      */
-    setFogUniforms(fogSettings) {
-        let fogColorUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogColor");
-        let fogNearUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogNear");
-        let fogFarUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogFar");
+    setFogUniforms(fogSettings, enabled) {
 
-        this.gl.uniform4fv(fogColorUniform, fogSettings.color);
-        this.gl.uniform1f(fogNearUniform, fogSettings.near);
-        this.gl.uniform1f(fogFarUniform, fogSettings.far);
+        let useFog = this.gl.getUniformLocation(this.shaderProgram, 'u_UseFog');
+
+        if (enabled) {
+            let fogColorUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogColor");
+            let fogNearUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogNear");
+            let fogFarUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogFar");
+
+            this.gl.uniform1i(useFog, 1);
+            this.gl.uniform4fv(fogColorUniform, fogSettings.color);
+            this.gl.uniform1f(fogNearUniform, fogSettings.near);
+            this.gl.uniform1f(fogFarUniform, fogSettings.far);
+        } else {
+            this.gl.uniform1i(useFog, 0);
+        }
     }
 
 

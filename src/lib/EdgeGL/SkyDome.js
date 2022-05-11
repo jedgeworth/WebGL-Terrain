@@ -24,6 +24,8 @@ module.exports = class SkyDome {
         this.domeSceneObject = new SceneObject(gl);
         this.domeSceneObject.setPrimitive(new DomePrimitive(gl, 1000, 0.5, 16, 32));
         this.domeSceneObject.setTexture(domeGlTexture);
+        this.domeSceneObject.useLighting = false;
+        this.domeSceneObject.useFog = false;
 
         this.floorSceneObject = new SceneObject(gl);
         this.floorSceneObject.setPrimitive(new QuadPlanePrimitive(gl, 1000, false));

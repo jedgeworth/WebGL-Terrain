@@ -31,6 +31,15 @@
 
         this.enabled = true;
 
+        this.shaderProgram = null;
+        this.useLighting = true;
+        this.useFog = true;
+
+        this.material = {
+            shininess: 100.0,
+
+        };
+
         this.verticesBuffer = null;
         this.textureCoordBuffer = null;
         this.normalBuffer = null;
@@ -78,6 +87,10 @@
     addSceneObject(sceneObject) {
         sceneObject.parentSceneObject = this;
         this.sceneObjects.push(sceneObject);
+    }
+
+    setShaderProgram(shaderProgram) {
+        this.shaderProgram = shaderProgram;
     }
 
     /**
@@ -247,56 +260,67 @@
     }
 
     /**
+     *
      * Called each frame during the game loop to render the scene object.
      * @param {*} shaderProgram EdgeGL/Shader object to use for rendering.
+     *
+     * @todo sceneObject should not need to know of the entire appRegistry. Find
+     * a better way to pass lighting and fog settings in.
      */
-    render(shaderProgram, activeCamera) {
+    render(appRegistry) {
 
-        activeCamera.matrices.mvPushMatrix();
+        appRegistry.camera.matrices.mvPushMatrix();
 
-        activeCamera.matrices.mvTranslate(this.position.elements);
-        activeCamera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
+        appRegistry.camera.matrices.mvTranslate(this.position.elements);
+        appRegistry.camera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
-        shaderProgram.setMatrixUniforms(
-            activeCamera.matrices.perspectiveMatrix,
-            activeCamera.matrices.mvMatrix
+        this.shaderProgram.use();
+        this.shaderProgram.setLightUniforms(appRegistry.lights.light0, this.useLighting);
+        this.shaderProgram.setFogUniforms(appRegistry.fogSettings, this.useFog);
+
+        this.shaderProgram.setMatrixUniforms(
+            appRegistry.camera.matrices.perspectiveMatrix,
+            appRegistry.camera.matrices.mvMatrix
         );
 
-        shaderProgram.enableAttributes();
+        this.shaderProgram.enableAttributes();
 
         // Vertices
-        if (this.verticesBuffer && shaderProgram.hasVertexPositionAttribute) {
+        if (this.verticesBuffer && this.shaderProgram.hasVertexPositionAttribute) {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.verticesBuffer);
-            this.gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
         }
 
         // Normals
-        if (this.normalBuffer && shaderProgram.hasVertexNormalAttribute) {
+        if (this.normalBuffer && this.shaderProgram.hasVertexNormalAttribute) {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBuffer);
-            this.gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
         }
 
         // Colors
-        if (this.colorBuffer && shaderProgram.hasVertexColorAttribute) {
+        if (this.colorBuffer && this.shaderProgram.hasVertexColorAttribute) {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-            this.gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.vertexAttribPointer(this.shaderProgram.vertexColorAttribute, 3, this.gl.FLOAT, false, 0, 0);
         }
 
         // Textures
-        if (this.glTexture && shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
+        if (this.glTexture && this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTexture);
-            this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_Texture0"), 0);
+            this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_Texture0"), 0);
 
             if (this.glTextureNormalMap) {
                 this.gl.activeTexture(this.gl.TEXTURE1);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTextureNormalMap);
-                this.gl.uniform1i(this.gl.getUniformLocation(shaderProgram.shaderProgram, "u_TextureNormal0"), 0);
+                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_TextureNormal0"), 1);
+                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_UseNormalMapping"), 1);
+            } else {
+                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_UseNormalMapping"), 0);
             }
 
-            this.gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+            this.gl.enableVertexAttribArray(this.shaderProgram.textureCoordAttribute);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
-            this.gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, 2, this.gl.FLOAT, false, 0, 0);
+            this.gl.vertexAttribPointer(this.shaderProgram.textureCoordAttribute, 2, this.gl.FLOAT, false, 0, 0);
         } else {
             // This is hopefully catered for by shaderProgram.enableAttributes();
             //this.gl.disableVertexAttribArray(shaderProgram.textureCoordAttribute);
@@ -311,14 +335,14 @@
 
         // Render sub-objects.
         for (let i = 0; i < this.sceneObjects.length; i += 1) {
-            this.sceneObjects[i].render(shaderProgram, activeCamera);
+            this.sceneObjects[i].render(appRegistry);
         }
 
-        activeCamera.matrices.mvPopMatrix();
+        appRegistry.camera.matrices.mvPopMatrix();
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
-        shaderProgram.disableAttributes();
+        this.shaderProgram.disableAttributes();
     }
 
     /**

@@ -179,6 +179,7 @@ module.exports = class AppRegistry{
 
         this.sceneObjects[name] = sceneObject;
         sceneObject.setName(name);
+        sceneObject.setShaderProgram(this.shaders[shaderName]);
 
         this.renderQueue[renderContext][name] = {
             shaderObject: this.shaders[shaderName],
@@ -204,11 +205,7 @@ module.exports = class AppRegistry{
             for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
 
                 if (objectWithShader.sceneObject.enabled && objectWithShader.sceneObject.parentSceneObject === null) {
-                    objectWithShader.shaderObject.use();
-                    objectWithShader.shaderObject.setLightUniforms(this.lights.light0);
-                    objectWithShader.shaderObject.setFogUniforms(this.fogSettings);
-
-                    objectWithShader.sceneObject.render(objectWithShader.shaderObject, this.camera);
+                    objectWithShader.sceneObject.render(this);
                 }
             }
 

@@ -88,20 +88,16 @@ function initSceneObjects(gl) {
     appRegistry.sky = skyDome;
 
 
-    // const domeObject = new SceneObject(gl);
-    // domeObject.setPrimitive(new DomePrimitive(gl, 4000, 0.5, 16, 32));
-    // domeObject.setTexture(appRegistry.glTextures.sky);
-    // domeObject.setPosition(100, 100, 100);
-    // appRegistry.registerSceneObject('dome', domeObject, 'base', 'static');
-
-
     // //
-    // const floorObject = new SceneObject(gl);
+    const floorObject = new SceneObject(gl);
 
-    // floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-    // floorObject.setTexture(appRegistry.glTextures.grassPurpleFlowers);
+    floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+    floorObject.setTexture(
+        appRegistry.glTextures.rock,
+        appRegistry.glTextures.rock_n
+    );
 
-    // appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
+    appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
 
     //
     const terrain = new Terrain();
@@ -136,7 +132,9 @@ function initSceneObjects(gl) {
     appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
 
     const sunLightVectorObject = new SceneObject(gl);
-    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 25.0));
+    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 5.0));
+
+    sunLightObject.addSceneObject(sunLightVectorObject);
 
     appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
 
@@ -191,11 +189,11 @@ function startGlContext() {
     if (gl !== null) {
 
         const sunLight = new Light(gl, "0");
-        sunLight.setDirection(1.0, -1.0, 1.0);
+        sunLight.setDirection(1000.0, 1000.0, 1000.0);
         sunLight.setAmbient(0.4, 0.4, 0.4);
-        sunLight.setDiffuse(0.7, 0.7, 0.7);
+        sunLight.setDiffuse(1.0, 1.0, 1.0);
         sunLight.setSpecular(0.6, 0.6, 0.6);
-        sunLight.setRenderPosition(500, 500, 500);
+        //sunLight.setRenderPosition(500, 500, 500);
         appRegistry.lights.light0 = sunLight;
 
         appRegistry.onAssetsLoaded = () => {
@@ -214,6 +212,8 @@ function startGlContext() {
             'grass' : require('./assets/img/grass.jpg'),
             'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
             'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
+            'rock' : require('./assets/img/rocks.png'),
+            'rock_n' : require('./assets/img/rocks_N.png'),
             'floor' : require('./assets/img/floor.png'),
             'lightbulb' : require('./assets/img/lightbulb.jpg'),
             'sky' : require('./assets/img/sky.png'),
@@ -223,8 +223,6 @@ function startGlContext() {
         appRegistry.registerShaders({
             line: "line",
             base: "base",
-            normalmapping: "normalmapping",
-            //terrain: "terrain",
         });
 
         loadModels();
