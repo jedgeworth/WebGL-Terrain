@@ -40,6 +40,14 @@ module.exports = class Camera {
     }
 
     /**
+     * Gets position as an array.
+     * @returns
+     */
+    getPosition() {
+        return [this.xPos, this.yPos, this.zPos];
+    }
+
+    /**
      * Set a specific rotation.
      * @param {*} pitch
      * @param {*} yaw

@@ -26,6 +26,7 @@ const DomePrimitive = require('./lib/EdgeGL/Primitives/DomePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
+const SkyDome = require('./lib/EdgeGL/SkyDome');
 
 const Sylvester = require('sylvester-es6/src/Sylvester');
 
@@ -71,26 +72,36 @@ function loadModels() {
 function initSceneObjects(gl) {
 
     const originObject = new SceneObject(gl);
-
     originObject.setPrimitive(new OriginPrimitive(gl));
-
     appRegistry.registerSceneObject('worldOrigin', originObject, 'line', 'static');
 
     //
-    const domeObject = new SceneObject(gl);
-    domeObject.setPrimitive(new DomePrimitive(gl, 4000, 0.5, 16, 32));
-    domeObject.setTexture(appRegistry.glTextures.sky);
-    domeObject.setPosition(100, 100, 100);
-    appRegistry.registerSceneObject('dome', domeObject, 'base', 'static');
+
+    const skyDome = new SkyDome(
+        gl,
+        appRegistry.glTextures.sky,
+        appRegistry.glTextures.waterDeep
+    );
+
+    skyDome.registerSceneObjects(appRegistry, 'domeSky', 'domeFloor');
+    skyDome.setCamera(appRegistry.camera);
+    appRegistry.sky = skyDome;
 
 
-    //
-    const floorObject = new SceneObject(gl);
+    // const domeObject = new SceneObject(gl);
+    // domeObject.setPrimitive(new DomePrimitive(gl, 4000, 0.5, 16, 32));
+    // domeObject.setTexture(appRegistry.glTextures.sky);
+    // domeObject.setPosition(100, 100, 100);
+    // appRegistry.registerSceneObject('dome', domeObject, 'base', 'static');
 
-    floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-    floorObject.setTexture(appRegistry.glTextures.grassPurpleFlowers);
 
-    appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
+    // //
+    // const floorObject = new SceneObject(gl);
+
+    // floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+    // floorObject.setTexture(appRegistry.glTextures.grassPurpleFlowers);
+
+    // appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
 
     //
     const terrain = new Terrain();
@@ -335,6 +346,10 @@ function drawScene(gl) {
     appRegistry.keyboardHandler.handleKeys();
     handleWindowResize(gl.canvas);
 
+    if (appRegistry.sky) {
+        appRegistry.sky.update();
+    }
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -342,11 +357,12 @@ function drawScene(gl) {
     appRegistry.camera.update();
     appRegistry.camera.debug('cameraDebug');
 
+    appRegistry.render('nonDepth');
+
     appRegistry.render('static');
 
-    appRegistry.sceneObjects.floor.position.setElements([testXPos, 0.0, 0.0]);
-
-    console.log(testXPos);
+    // appRegistry.sceneObjects.floor.position.setElements([testXPos, 0.0, 0.0]);
+    // appRegistry.sceneObjects.floorSub.position.setElements([testXPos, 0.0, 0.0]);
 
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);

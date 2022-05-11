@@ -22,6 +22,7 @@ module.exports = class AppRegistry{
         this.shaders = {};
         this.sceneObjects = {};
         this.nodePaths = {};
+        this.sky = null;
 
         this.lights = {};
 
@@ -38,6 +39,7 @@ module.exports = class AppRegistry{
             ortho: {},
             static: {},
             dynamic: {},
+            nonDepth: {},
         };
 
         this.lastUpdateTime = 0;
@@ -194,15 +196,24 @@ module.exports = class AppRegistry{
     render(renderContext, delta) {
 
         if (this.renderQueue[renderContext] !== undefined) {
+
+            if (renderContext === 'nonDepth') {
+                this.gl.disable(this.gl.DEPTH_TEST);
+            }
+
             for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
 
-                if (objectWithShader.sceneObject.enabled) {
+                if (objectWithShader.sceneObject.enabled && objectWithShader.sceneObject.parentSceneObject === null) {
                     objectWithShader.shaderObject.use();
                     objectWithShader.shaderObject.setLightUniforms(this.lights.light0);
                     objectWithShader.shaderObject.setFogUniforms(this.fogSettings);
 
                     objectWithShader.sceneObject.render(objectWithShader.shaderObject, this.camera);
                 }
+            }
+
+            if (renderContext === 'nonDepth') {
+                this.gl.enable(this.gl.DEPTH_TEST);
             }
         }
 

@@ -26,6 +26,9 @@
 
         this.name = '';
 
+        this.parentSceneObject = null;
+        this.sceneObjects = [];
+
         this.enabled = true;
 
         this.verticesBuffer = null;
@@ -66,6 +69,15 @@
 
     setPosition(x, y, z) {
         this.position.setElements([x, y ,z]);
+    }
+
+    setPositionArray(position) {
+        this.position.setElements(position);
+    }
+
+    addSceneObject(sceneObject) {
+        sceneObject.parentSceneObject = this;
+        this.sceneObjects.push(sceneObject);
     }
 
     /**
@@ -295,6 +307,11 @@
             this.gl.drawElements(this.renderMode, this.numItems, this.gl.UNSIGNED_SHORT, 0);
         } else if (this.verticesBuffer) {
             this.gl.drawArrays(this.renderMode, 0, this.numItems);
+        }
+
+        // Render sub-objects.
+        for (let i = 0; i < this.sceneObjects.length; i += 1) {
+            this.sceneObjects[i].render(shaderProgram, activeCamera);
         }
 
         activeCamera.matrices.mvPopMatrix();
