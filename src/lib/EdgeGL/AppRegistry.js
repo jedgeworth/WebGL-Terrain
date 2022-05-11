@@ -200,10 +200,6 @@ module.exports = class AppRegistry{
                     objectWithShader.shaderObject.use();
                     objectWithShader.shaderObject.setLightUniforms(this.lights.light0);
                     objectWithShader.shaderObject.setFogUniforms(this.fogSettings);
-                    objectWithShader.shaderObject.setMatrixUniforms(
-                        this.camera.matrices.perspectiveMatrix,
-                        this.camera.matrices.mvMatrix
-                    );
 
                     objectWithShader.sceneObject.render(objectWithShader.shaderObject, this.camera);
                 }

@@ -99,11 +99,13 @@
         varying vec3 v_Normal;
         varying vec3 v_EyeVec;
         varying float v_FogDepth;
+        varying vec3 v_RawNormal;
 
         void main(void) {
 
             vec4 vertex = u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
             v_Normal = vec3(u_NormalMatrix * vec4(a_VertexNormal, 1.0));
+            v_RawNormal = a_VertexNormal;
             v_EyeVec = vec3(vertex.xyz);
 
             v_TextureCoord = a_TextureCoord;
@@ -138,6 +140,7 @@
         varying vec2 v_TextureCoord;
         varying vec3 v_Lighting;
         varying vec3 v_Normal;
+        varying vec3 v_RawNormal;
         varying vec3 v_EyeVec;
         varying float v_FogDepth;
 
@@ -167,6 +170,10 @@
           float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
 
           finalColor = mix( finalColor, u_FogColor, fogAmount );
+
+          //if (v_RawNormal.y < .85 && v_RawNormal.x < .85 && v_RawNormal.z < .85) {
+          //    finalColor.r = 255.0;
+          //}
 
           gl_FragColor = finalColor;
         }

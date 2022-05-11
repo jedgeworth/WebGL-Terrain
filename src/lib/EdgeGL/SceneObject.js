@@ -64,6 +64,10 @@
         this.enabled = isEnabled;
     }
 
+    setPosition(x, y, z) {
+        this.position.setElements([x, y ,z]);
+    }
+
     /**
      * Set the vertex buffer data.
      * @param {*} vertices Array of vertices as [v1.x, v1.y, v1.z, v2.x, v2.y, v2.z,...]
@@ -241,8 +245,10 @@
         activeCamera.matrices.mvTranslate(this.position.elements);
         activeCamera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
-        this.checkBuffers(shaderProgram);
-
+        shaderProgram.setMatrixUniforms(
+            activeCamera.matrices.perspectiveMatrix,
+            activeCamera.matrices.mvMatrix
+        );
 
         shaderProgram.enableAttributes();
 

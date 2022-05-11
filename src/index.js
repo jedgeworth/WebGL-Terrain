@@ -22,6 +22,7 @@ const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
 const CubePrimitive = require('./lib/EdgeGL/Primitives/CubePrimitive');
 const LinePrimitive = require('./lib/EdgeGL/Primitives/LinePrimitive');
+const DomePrimitive = require('./lib/EdgeGL/Primitives/DomePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
@@ -76,6 +77,14 @@ function initSceneObjects(gl) {
     appRegistry.registerSceneObject('worldOrigin', originObject, 'line', 'static');
 
     //
+    const domeObject = new SceneObject(gl);
+    domeObject.setPrimitive(new DomePrimitive(gl, 4000, 0.5, 16, 32));
+    domeObject.setTexture(appRegistry.glTextures.sky);
+    domeObject.setPosition(100, 100, 100);
+    appRegistry.registerSceneObject('dome', domeObject, 'base', 'static');
+
+
+    //
     const floorObject = new SceneObject(gl);
 
     floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
@@ -92,9 +101,6 @@ function initSceneObjects(gl) {
     terrain.populateSceneObject(terrainObject);
 
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
-    // terrainObject.setTexture(
-    //     appRegistry.glTextures.grass
-    // );
     terrainObject.setTexture(
         appRegistry.glTextures.grassPurpleFlowers,
         appRegistry.glTextures.grassPurpleFlowers_n
@@ -151,7 +157,7 @@ function startGlContext() {
     let gl = null;
 
     try {
-        gl = canvas.getContext("experimental-webgl");
+        gl = canvas.getContext("webgl");
     } catch(e) {
         console.error(e);
     }
@@ -199,6 +205,8 @@ function startGlContext() {
             'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
             'floor' : require('./assets/img/floor.png'),
             'lightbulb' : require('./assets/img/lightbulb.jpg'),
+            'sky' : require('./assets/img/sky.png'),
+            'waterDeep' : require('./assets/img/water_deep.png'),
         });
 
         appRegistry.registerShaders({
@@ -315,7 +323,7 @@ function bindWebUI(gl) {
     });
 }
 
-
+let testXPos = 0.0;
 
 /**
  * drawScene
@@ -330,10 +338,15 @@ function drawScene(gl) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+
     appRegistry.camera.update();
     appRegistry.camera.debug('cameraDebug');
 
     appRegistry.render('static');
+
+    appRegistry.sceneObjects.floor.position.setElements([testXPos, 0.0, 0.0]);
+
+    console.log(testXPos);
 
 
     // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
@@ -343,6 +356,11 @@ function drawScene(gl) {
     const currentTime = (new Date).getTime();
     if (appRegistry.lastUpdateTime) {
         const delta = currentTime - appRegistry.lastUpdateTime;
+
+        testXPos += (30 * delta) / 1000.0;
+        if (testXPos > 200) {
+            testXPos = 0;
+        }
 
         // (Call any updates on animated sceneObjects based on delta.)
         appRegistry.render('timed', delta);
