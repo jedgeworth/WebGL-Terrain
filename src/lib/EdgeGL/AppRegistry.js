@@ -7,6 +7,8 @@ const Shader = require("./Shader");
  *
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
+
+ const Texture = require('./Texture');
 module.exports = class AppRegistry{
 
     constructor() {
@@ -25,6 +27,8 @@ module.exports = class AppRegistry{
         this.sky = null;
 
         this.lights = {};
+
+        this.textures = {};
 
         this.fogSettings = {
             color: [0.8, 0.9, 1.0, 1.0],
@@ -84,12 +88,45 @@ module.exports = class AppRegistry{
         }
     }
 
+    /**
+     * Creates a Texture() object from image data.
+     *
+     * Naming scheme is:
+     *
+     * name: texture
+     * name_n: Normal map
+     * name_h: Heightmap
+     * name_dudv: DUDV map
+     * @param {*} imageName Name of image previously added via registerImages.
+     */
+    registerTexture(imageName) {
+        const texture = new Texture(this.gl, imageName);
+
+        if (this.textureImages[imageName] !== undefined) {
+            texture.setTexture(this.textureImages[imageName]);
+        }
+
+        if (this.textureImages[imageName + '_n'] !== undefined) {
+            texture.setNormal(this.textureImages[imageName + '_n']);
+        }
+
+        if (this.textureImages[imageName + '_h'] !== undefined) {
+            texture.setHeightmap(this.textureImages[imageName + '_h']);
+        }
+
+        if (this.textureImages[imageName + '_dudv'] !== undefined) {
+            texture.setDUDV(this.textureImages[imageName + '_dudv']);
+        }
+
+        this.textures[imageName] = texture;
+
+    }
 
     /**
      * Loads any expected texture assets from files.
      * @param {*} textures
      */
-    registerTextures(textures) {
+    registerTextureImages(textures) {
         let countTexturesLoaded = 0;
         const totalEntries = Object.keys(textures).length;
 
@@ -112,23 +149,28 @@ module.exports = class AppRegistry{
      * Converts any registered textures into GL_TEXTURE buffers.
      */
     createGlTextures() {
-        for (const [textureKey, textureImage] of Object.entries(this.textureImages)) {
-            const glTexture = this.gl.createTexture();
 
-            this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
-            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
-
-            this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, textureImage);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
-            this.gl.generateMipmap(this.gl.TEXTURE_2D);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
-            this.glTextures[textureKey] = glTexture;
+        for (const [imageName, textureImage] of Object.entries(this.textureImages)) {
+            this.registerTexture(imageName);
         }
+
+        // for (const [textureKey, textureImage] of Object.entries(this.textureImages)) {
+        //     const glTexture = this.gl.createTexture();
+
+        //     this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
+        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+        //     this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+
+        //     this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
+        //     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, textureImage);
+        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+        //     this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        //     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+        //     this.glTextures[textureKey] = glTexture;
+        // }
     }
 
 

@@ -17,6 +17,7 @@ const Camera = require('./lib/EdgeGL/Camera');
 const Shader = require('./lib/EdgeGL/Shader');
 const SceneObject = require('./lib/EdgeGL/SceneObject');
 const Light = require('./lib/EdgeGL/Light');
+const Texture = require('./lib/EdgeGL/Texture');
 
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
@@ -79,8 +80,8 @@ function initSceneObjects(gl) {
 
     const skyDome = new SkyDome(
         gl,
-        appRegistry.glTextures.sky,
-        appRegistry.glTextures.waterDeep
+        appRegistry.textures.sky,
+        appRegistry.textures.waterDeep
     );
 
     skyDome.registerSceneObjects(appRegistry, 'domeSky', 'domeFloor');
@@ -88,16 +89,23 @@ function initSceneObjects(gl) {
     appRegistry.sky = skyDome;
 
 
-    // //
+    //
     const floorObject = new SceneObject(gl);
 
     floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-    floorObject.setTexture(
-        appRegistry.glTextures.rock,
-        appRegistry.glTextures.rock_n
-    );
+    floorObject.setTexture(appRegistry.textures.rock);
+    floorObject.setPosition(0, 0, -200);
 
     appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
+
+    //
+    const floorObject2 = new SceneObject(gl);
+
+    floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+    floorObject2.setTexture(appRegistry.textures['243']);
+    floorObject2.setPosition(200, 0, -200);
+
+    appRegistry.registerSceneObject('floor2', floorObject2, 'base', 'static');
 
     //
     const terrain = new Terrain();
@@ -108,10 +116,7 @@ function initSceneObjects(gl) {
     terrain.populateSceneObject(terrainObject);
 
     terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
-    terrainObject.setTexture(
-        appRegistry.glTextures.grassPurpleFlowers,
-        appRegistry.glTextures.grassPurpleFlowers_n
-    );
+    terrainObject.setTexture(appRegistry.textures.grassPurpleFlowers);
 
     appRegistry.registerSceneObject('terrain', terrainObject, 'base', 'static');
 
@@ -126,7 +131,7 @@ function initSceneObjects(gl) {
     //
     const sunLightObject = new SceneObject(gl);
     sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
-    sunLightObject.setTexture(appRegistry.glTextures.lightbulb);
+    sunLightObject.setTexture(appRegistry.textures.lightbulb);
     appRegistry.lights.light0.setSceneObject(sunLightObject);
 
     appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
@@ -156,7 +161,6 @@ function initSceneObjects(gl) {
  */
 function startGlContext() {
 
-    //const frameRate = 15;
     const canvas = document.getElementById("glcanvas");
 
     if (canvas === undefined || canvas === null) {
@@ -189,10 +193,10 @@ function startGlContext() {
     if (gl !== null) {
 
         const sunLight = new Light(gl, "0");
-        sunLight.setDirection(1000.0, 1000.0, 1000.0);
+        sunLight.setDirection(1000.0, 500.0, 1000.0);
         sunLight.setAmbient(0.4, 0.4, 0.4);
         sunLight.setDiffuse(1.0, 1.0, 1.0);
-        sunLight.setSpecular(0.6, 0.6, 0.6);
+        sunLight.setSpecular(1.0, 1.0, 1.0);
         //sunLight.setRenderPosition(500, 500, 500);
         appRegistry.lights.light0 = sunLight;
 
@@ -203,17 +207,23 @@ function startGlContext() {
             bindWebUI(gl);
 
             requestAnimationFrame(() => drawScene(gl));
-
-            //setInterval(() => { drawScene(gl) }, frameRate);
         };
 
-        appRegistry.registerTextures({
+
+
+        appRegistry.registerTextureImages({
             'blank' : require('./assets/img/blank.png'),
             'grass' : require('./assets/img/grass.jpg'),
+
             'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
             'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
+
             'rock' : require('./assets/img/rocks.png'),
             'rock_n' : require('./assets/img/rocks_N.png'),
+
+            '243' : require('./assets/img/243.png'),
+            '243_n' : require('./assets/img/243_n.png'),
+
             'floor' : require('./assets/img/floor.png'),
             'lightbulb' : require('./assets/img/lightbulb.jpg'),
             'sky' : require('./assets/img/sky.png'),
@@ -329,6 +339,10 @@ function bindWebUI(gl) {
             appRegistry.fogSettings.near = document.getElementById('fogNear').value;
             appRegistry.fogSettings.far = document.getElementById('fogFar').value;
         });
+    });
+
+    document.querySelector('input[class="shininess"]').addEventListener('change', (event) => {
+        appRegistry.lights.light0.shininess = document.getElementById('shininess').value;
     });
 }
 

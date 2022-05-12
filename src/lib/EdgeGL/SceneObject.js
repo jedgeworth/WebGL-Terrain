@@ -14,6 +14,7 @@
  */
 
  const Sylvester = require('sylvester-es6/src/Sylvester');
+ const Texture = require('./Texture');
 
  module.exports = class SceneObject {
 
@@ -49,6 +50,7 @@
 
         this.glTexture = null;
         this.glTextureNormalMap = null;
+        this.texture0 = null;
 
         this.position = new Sylvester.Vector([0.0, 0.0, 0.0]);
         this.pitch = 0.0;
@@ -155,17 +157,19 @@
      * Set the texture object.
      * @param {*} texture GL_TEXTURE_2D object.
      */
-    setTexture(texture, normalMap) {
+    setTexture(texture) {
 
         if (texture === undefined) {
             throw "SceneObject: Trying to set a texture that is undefined.";
         }
 
-        this.glTexture = texture;
+        this.texture0 = texture;
 
-        if (normalMap !== undefined) {
-            this.glTextureNormalMap = normalMap;
-        }
+        // this.glTexture = texture;
+
+        // if (normalMap !== undefined) {
+        //     this.glTextureNormalMap = normalMap;
+        // }
     }
 
     /**
@@ -246,7 +250,7 @@
         }
 
         if (shaderProgram.hasTextureCoordAttribute) {
-            if (!this.verticesBuffer) {
+            if (!this.textureCoordBuffer) {
                 console.log(`Shader for ${this.name} has a texture coord attribute but will not be bound.`);
             }
         }
@@ -304,14 +308,14 @@
         }
 
         // Textures
-        if (this.glTexture && this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
+        if (this.texture0 && this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
             this.gl.activeTexture(this.gl.TEXTURE0);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTexture);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTexture);
             this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_Texture0"), 0);
 
-            if (this.glTextureNormalMap) {
+            if (this.texture0.glTextureNormal) {
                 this.gl.activeTexture(this.gl.TEXTURE1);
-                this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTextureNormalMap);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureNormal);
                 this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_TextureNormal0"), 1);
                 this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_UseNormalMapping"), 1);
             } else {

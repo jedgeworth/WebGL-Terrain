@@ -151,6 +151,7 @@ module.exports = class Shader {
             let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
             let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
             let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
+            let light0Shininess = this.gl.getUniformLocation(this.shaderProgram, `u_Shininess`);
 
 
             this.gl.uniform1i(useLighting, 1);
@@ -158,6 +159,7 @@ module.exports = class Shader {
             this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
             this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
             this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
+            this.gl.uniform1f(light0Shininess, lightObject.shininess);
         } else {
             this.gl.uniform1i(useLighting, 0);
         }

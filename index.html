@@ -137,8 +137,9 @@
         uniform vec3 u_Light0Diffuse;
         uniform vec3 u_Light0Specular;
         uniform vec3 u_Light0Position;
+        uniform float u_Shininess;
 
-        const float u_Shininess = 200.0;
+
         const vec4 u_MaterialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
         const vec4 u_MaterialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
         const vec4 u_MaterialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
@@ -161,8 +162,13 @@
             vec3 N = normalize( v_Normal );
 
             if (u_UseNormalMapping) {
-                vec3 fragmentNormal = normalize( texture2D(u_Texture1, v_TextureCoord).rgb * 2.0 - 1.0 ) * -1.0;
-                N = normalize(fragmentNormal * v_Normal);
+                vec3 normalColor = texture2D(u_Texture1, v_TextureCoord).rgb;
+
+                // Assume normal map is D3D - if so we flip the green value.
+                normalColor.g *= -1.0;
+
+                vec3 fragmentNormal = normalize( normalColor * 2.0 - 1.0 );
+                N = normalize(fragmentNormal + v_Normal);
             }
 
             float lambertTerm = dot(N, L);
@@ -376,6 +382,11 @@
             <h3>Sunlight</h3>
 
             <label>
+                Shininess
+                <input class="shininess" type="range" min="0.0" max="1.0" step="0.1" id="shininess" name="shininess" value="1.0">
+            </label>
+
+            <label>
                 Diffuse R
                 <input class="diffuse" type="range" min="0.0" max="1" step="0.01" id="diffuseR" name="diffuseR" value="0.7">
             </label>
@@ -392,17 +403,17 @@
 
             <label>
                 Specular R
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularR" name="specularR" value="0.6">
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularR" name="specularR" value="0.16">
             </label>
 
             <label>
                 Specular G
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularG" name="specularG" value="0.6">
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularG" name="specularG" value="0.16">
             </label>
 
             <label>
                 Specular B
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularB" name="specularB" value="0.6">
+                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularB" name="specularB" value="0.16">
             </label>
 
             <br>
@@ -413,7 +424,7 @@
 
             <label>
                 Y
-                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="1000.0">
+                <input class="sunPos" type="text" id="sunPosY" name="sunPosY" value="500.0">
             </label>
 
             <label>

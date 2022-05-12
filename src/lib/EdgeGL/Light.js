@@ -32,6 +32,9 @@ module.exports = class Light {
         this.ambient = new Color4();
         this.diffuse = new Color4();
         this.specular = new Color4();
+
+        // This is a material property and will be moved to a material object.
+        this.shininess = 100.0;
     }
 
     /**
