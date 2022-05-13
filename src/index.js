@@ -30,6 +30,9 @@ const Terrain = require('./lib/EdgeGL/Terrain');
 const SkyDome = require('./lib/EdgeGL/SkyDome');
 
 const Sylvester = require('sylvester-es6/src/Sylvester');
+const Vector3 = require('./lib/EdgeGL/types/Vector3');
+const {distanceBetween} = require('./lib/EdgeGL/VectorMath');
+const NodePath = require('./lib/EdgeGL/NodePath');
 
 
 /**
@@ -145,6 +148,8 @@ function initSceneObjects(gl) {
 
     appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
 
+    appRegistry.nodePaths.zigzag.addSceneObject(sunLightObject);
+
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
     // tankMesh.setVertices(app.models.tank.vertices);
@@ -212,6 +217,7 @@ function startGlContext() {
         };
 
 
+        appRegistry.nodePaths.zigzag = new NodePath();
 
         appRegistry.registerTextureImages({
             'blank' : require('./assets/img/blank.png'),
@@ -391,10 +397,10 @@ function drawScene(gl) {
     if (appRegistry.lastUpdateTime) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
-        testXPos += (30 * delta) / 1000.0;
-        if (testXPos > 200) {
-            testXPos = 0;
+        if (appRegistry.lights.light0.type == 1) {
+            appRegistry.nodePaths.zigzag.tick(delta);
         }
+
 
         // (Call any updates on animated sceneObjects based on delta.)
         appRegistry.render('timed', delta);

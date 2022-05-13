@@ -13,7 +13,7 @@
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
 
- const Sylvester = require('sylvester-es6/src/Sylvester');
+ const Vector3 = require('./types/Vector3');
  const Texture = require('./Texture');
 
  module.exports = class SceneObject {
@@ -52,7 +52,7 @@
         this.glTextureNormalMap = null;
         this.texture0 = null;
 
-        this.position = new Sylvester.Vector([0.0, 0.0, 0.0]);
+        this.position = new Vector3(0.0, 0.0, 0.0);
         this.pitch = 0.0;
         this.yaw = 0.0;
         this.roll = 0.0;
@@ -79,11 +79,18 @@
     }
 
     setPosition(x, y, z) {
-        this.position.setElements([x, y ,z]);
+        this.position.x = x;
+        this.position.y = y;
+        this.position.z = z;
+
+        //this.position.setElements([x, y ,z]);
     }
 
     setPositionArray(position) {
-        this.position.setElements(position);
+        this.position.x = position[0];
+        this.position.y = position[1];
+        this.position.z = position[2];
+        //this.position.setElements(position);
     }
 
     addSceneObject(sceneObject) {
@@ -275,7 +282,7 @@
 
         appRegistry.camera.matrices.mvPushMatrix();
 
-        appRegistry.camera.matrices.mvTranslate(this.position.elements);
+        appRegistry.camera.matrices.mvTranslate(this.position.flatten());
         appRegistry.camera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
         this.shaderProgram.use();

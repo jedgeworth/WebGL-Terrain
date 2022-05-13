@@ -229,17 +229,17 @@ module.exports = class Terrain {
             bufferVertices.push(this.verts[i].y);
             bufferVertices.push(this.verts[i].z);
 
-            bufferColors.push(1.0, 0.0, 0.0);
-            bufferColors.push(1.0, 0.0, 0.0);
-            bufferColors.push(1.0, 0.0, 0.0);
+            bufferColors.push(1.0);
+            bufferColors.push(0.0);
+            bufferColors.push(0.0);
 
             bufferVertices.push(this.verts[i].x + (5.0 * this.verts[i].nx));
             bufferVertices.push(this.verts[i].y + (5.0 * this.verts[i].ny));
             bufferVertices.push(this.verts[i].z + (5.0 * this.verts[i].nz));
 
-            bufferColors.push(0.0, 1.0, 0.0);
-            bufferColors.push(0.0, 1.0, 0.0);
-            bufferColors.push(0.0, 1.0, 0.0);
+            bufferColors.push(0.0);
+            bufferColors.push(1.0);
+            bufferColors.push(0.0);
 
         }
 

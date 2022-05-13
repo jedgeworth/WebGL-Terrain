@@ -114,7 +114,7 @@
             vec4 vertex = u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
             v_Normal = vec3(u_NormalMatrix * vec4(a_VertexNormal, 1.0));
             v_RawNormal = a_VertexNormal;
-            v_EyeVec = -vec3(vertex.xyz);
+            v_EyeVec = vec3(vertex.xyz);
 
             // Point light
             v_Light0PointPosition = vec3(u_Light0Position - a_VertexPosition);
