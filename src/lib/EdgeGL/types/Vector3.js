@@ -8,11 +8,19 @@
 
 module.exports = class Vector3 {
 
-    constructor() {
+    constructor(x, y, z) {
         // Vertex (Offset: 0)
-        this.x = 0.0;
-        this.y = 0.0;
-        this.z = 0.0;
+
+        if (x !== undefined) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        } else {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+        }
+
     }
 
     flatten() {

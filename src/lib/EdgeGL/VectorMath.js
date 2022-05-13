@@ -8,41 +8,73 @@
 
   const Vector3 = require('./types/Vector3');
 
+  const PI = 3.14159265359;
+
   /**
    * Calculates which direction a vector is heading in.
-   * @param  {[type]} v [description]
+   * @param  {Vector3} v "Vector*" to calculate angle for.
    * @return {[type]}   [description]
    */
   function angleForVector(v) {
-    let angle = Math.atan(v[0] / v[1]) * (180 / 3.14);
+    let angle = Math.atan(v.x / v.y) * (180.0 / PI);
 
-    if (v[1] < 0) angle = angle + 180;
+    if (v.y < 0) {
+        angle = angle + 180.0;
+    }
 
     return angle;
 }
 
 /**
+ *
+ * @param {*} v
+ * @returns
+ */
+function magnitudeForVector(v) {
+    return Math.sqrt( (v.x * v.x) + (v.y * v.y) + (v.z * v.z) );
+}
+
+/**
  * Use this on any rotations to stop them getting stupidly high angles.
- * @param  {[type]} a [description]
- * @return {[type]}   [description]
+ * @param  {float} a Angle to check.
+ * @return {float}   New angle, wrapped if needed.
  */
 function wrapAngle(a) {
-    if (a < 0) a += 360.0;
-    else if (a > 360.0) a -= 360.0;
+    if (a < 0) {
+        a += 360.0;
+    } else if (a > 360.0) {
+        a -= 360.0;
+    }
 
     return a;
 }
 
 /**
  * Checks if two coordinates are equal (when rounded).
- * @param  {[type]} v1 [description]
- * @param  {[type]} v2 [description]
- * @return {[type]}    [description]
+ * @param  {Vector3} v1 "Vector*" object.
+ * @param  {Vector3} v2 "Vector*" object.
+ * @return {bool}    True if equal.
  */
 function pointEqualToPoint(v1, v2) {
-    return (Math.round(v1[0]) == Math.round(v2[0]) &&
-            Math.round(v1[1]) == Math.round(v2[1]) &&
-            Math.round(v1[2]) == Math.round(v2[2]));
+    return (Math.round(v1.x) == Math.round(v2.x) &&
+            Math.round(v1.x) == Math.round(v2.x) &&
+            Math.round(v1.x) == Math.round(v2.x));
+}
+
+
+/**
+ * Finds the distance between two vectors.
+ *
+ * @param {Vector3} v1 "Vector*" object.
+ * @param {Vector3} v2 "Vector*" object.
+ * @return {float} The distance.
+ */
+function distanceBetween(v1, v2) {
+    const x = v2.x - v1.x;
+    const y = v2.y - v1.y;
+    const z = v2.z - v1.z;
+
+    return Math.sqrt((x*x) + (y*y) + (z+z));
 }
 
 /**
@@ -51,16 +83,28 @@ function pointEqualToPoint(v1, v2) {
  * @return {[type]}     [description]
  */
 function radToDeg(rad) {
-    return (rad * 180) / 3.141;
+    return rad * (180.0 / PI);
 }
 
-
-function getVelocity(destination, position, speed) {
-    let velocity = destination.subtract(position);
-    velocity = velocity.toUnitVector();
-
-    return velocity.multiply(speed);
+function degToRad(deg) {
+    return deg * (PI / 180.0);
 }
+
+/**
+ * Gets the velocity.
+ *
+ * @param {Vector3} destinationVector Vector* object
+ * @param {Vector3} positionVector Vector* object
+ * @param {Vector3} speed speed
+ */
+function getVelocity(destinationVector, positionVector, speed) {
+
+    const velocityVector = subtractVector(destinationVector, positionVector);
+    normalizePosition(velocityVector);
+
+    return multiplyVector(velocityVector, speed);
+}
+
 
 
 /**
@@ -131,6 +175,16 @@ function subtractVector(v1, v2) {
     return result;
 }
 
+function multiplyVector(v, value) {
+    const result = new Vector3();
+
+    result.x = v.x * value;
+    result.y = v.y * value;
+    result.z = v.z * value;
+
+    return result;
+}
+
 function divideVector(v, value) {
     const result = new Vector3();
 
@@ -143,10 +197,13 @@ function divideVector(v, value) {
 
 module.exports = {
     angleForVector,
+    magnitudeForVector,
     wrapAngle,
     pointEqualToPoint,
     radToDeg,
+    degToRad,
     getVelocity,
+    distanceBetween,
 
     normalize,
     normalizePosition,
