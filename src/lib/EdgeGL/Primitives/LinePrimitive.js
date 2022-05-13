@@ -14,7 +14,7 @@
 
     constructor(gl, position, length) {
         this.vertices = [
-            position.x,       position.y,     position.z,
+            0.0,       0.0,     0.0,
             position.x * length,       position.y * length,     position.z * length,
         ];
 

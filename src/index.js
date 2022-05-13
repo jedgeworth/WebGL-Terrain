@@ -132,12 +132,14 @@ function initSceneObjects(gl) {
     const sunLightObject = new SceneObject(gl);
     sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
     sunLightObject.setTexture(appRegistry.textures.lightbulb);
+    sunLightObject.useFog = false;
+    sunLightObject.useLighting = false;
     appRegistry.lights.light0.setSceneObject(sunLightObject);
 
     appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
 
     const sunLightVectorObject = new SceneObject(gl);
-    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 5.0));
+    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
 
     sunLightObject.addSceneObject(sunLightVectorObject);
 
@@ -193,11 +195,11 @@ function startGlContext() {
     if (gl !== null) {
 
         const sunLight = new Light(gl, "0");
-        sunLight.setDirection(1000.0, 500.0, 1000.0);
+        sunLight.setDirection(1.0, -1.0, 1.0);
         sunLight.setAmbient(0.4, 0.4, 0.4);
         sunLight.setDiffuse(1.0, 1.0, 1.0);
         sunLight.setSpecular(1.0, 1.0, 1.0);
-        //sunLight.setRenderPosition(500, 500, 500);
+        sunLight.setRenderPosition(500, 500, 500);
         appRegistry.lights.light0 = sunLight;
 
         appRegistry.onAssetsLoaded = () => {
@@ -343,6 +345,10 @@ function bindWebUI(gl) {
 
     document.querySelector('input[class="shininess"]').addEventListener('change', (event) => {
         appRegistry.lights.light0.shininess = document.getElementById('shininess').value;
+    });
+
+    document.querySelector('select[class="sunType"]').addEventListener('change', (event) => {
+        appRegistry.lights.light0.setType(document.getElementById('sunType').value);
     });
 }
 

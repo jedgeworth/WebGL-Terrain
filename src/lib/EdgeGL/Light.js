@@ -33,8 +33,51 @@ module.exports = class Light {
         this.diffuse = new Color4();
         this.specular = new Color4();
 
+        // 0: Directional light
+        // 1: Point light
+        // 2: Spot light
+        this.type = 0;
+
         // This is a material property and will be moved to a material object.
-        this.shininess = 100.0;
+        this.shininess = 1.0;
+    }
+
+
+    setType(type) {
+        this.type = type;
+
+        this.updateSceneObjectPosition();
+    }
+
+    /**
+     * Depending on the light type, this updates the scene object to use
+     * the correct position.
+     */
+    updateSceneObjectPosition() {
+
+        if (this.sceneObject !== null) {
+            if (this.type == 0) {
+                if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0.0) {
+                    this.sceneObject.setPositionArray([
+                        this.renderPosition.x,
+                        this.renderPosition.y,
+                        this.renderPosition.z
+                    ]);
+                } else {
+                    this.sceneObject.setPositionArray([
+                        this.position.x,
+                        this.position.y,
+                        this.position.z
+                    ]);
+                }
+            } else {
+                this.sceneObject.setPositionArray([
+                    this.position.x,
+                    this.position.y,
+                    this.position.z
+                ]);
+            }
+        }
     }
 
     /**
@@ -49,13 +92,7 @@ module.exports = class Light {
         this.position.y = y;
         this.position.z = z;
 
-        if (this.sceneObject !== null) {
-            this.sceneObject.setPositionArray([
-                this.position.x,
-                this.position.y,
-                this.position.z
-            ]);
-        }
+        this.updateSceneObjectPosition();
     }
 
     /**
@@ -133,13 +170,7 @@ module.exports = class Light {
         this.renderPosition.y = y;
         this.renderPosition.z = z;
 
-        if (this.sceneObject !== null) {
-            this.sceneObject.setPositionArray([
-                this.renderPosition.x,
-                this.renderPosition.y,
-                this.renderPosition.z
-            ]);
-        }
+        this.updateSceneObjectPosition();
     }
 
     randomise() {
@@ -155,19 +186,7 @@ module.exports = class Light {
     setSceneObject(sceneObject) {
         this.sceneObject = sceneObject;
 
-        if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0) {
-            this.sceneObject.setPositionArray([
-                this.renderPosition.x,
-                this.renderPosition.y,
-                this.renderPosition.z
-            ]);
-        } else {
-            this.sceneObject.setPositionArray([
-                this.position.x,
-                this.position.y,
-                this.position.z
-            ]);
-        }
+        this.updateSceneObjectPosition();
 
     }
 
