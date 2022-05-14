@@ -139,7 +139,7 @@ function initSceneObjects(gl) {
     sunLightObject.useLighting = false;
     appRegistry.lights.light0.setSceneObject(sunLightObject);
 
-    appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
+    appRegistry.registerSceneObject('sunLight', sunLightObject, 'billboard', 'static');
 
     const sunLightVectorObject = new SceneObject(gl);
     sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
@@ -203,8 +203,9 @@ function startGlContext() {
         sunLight.setDirection(1.0, -1.0, 1.0);
         sunLight.setAmbient(0.3, 0.3, 0.3);
         sunLight.setDiffuse(0.7, 0.7, 0.7);
-        sunLight.setSpecular(0.4, 0.4, 0.4);
+        sunLight.setSpecular(0.2, 0.2, 0.2);
         sunLight.setRenderPosition(500, 500, 500);
+        sunLight.setType(1);
         appRegistry.lights.light0 = sunLight;
 
         appRegistry.onAssetsLoaded = () => {
@@ -241,6 +242,7 @@ function startGlContext() {
         appRegistry.registerShaders({
             line: "line",
             base: "base",
+            billboard: "billboard",
         });
 
         loadModels();

@@ -258,6 +258,59 @@
     </script>
 
 
+    <script id="billboard-vs" type="x-shader/x-vertex">
+        precision highp float;
+
+        attribute vec3 a_VertexPosition;
+        attribute vec3 a_VertexColor;
+        attribute vec2 a_TextureCoord;
+
+        uniform mat4 u_ModelViewMatrix;
+        uniform mat4 u_ProjectionMatrix;
+
+        varying vec2 v_TextureCoord;
+        varying vec3 v_Color;
+
+        void main(void) {
+
+            mat4 mvMatrix = u_ModelViewMatrix;
+            mvMatrix[0][0] = 1.0;
+            mvMatrix[0][1] = 0.0;
+            mvMatrix[0][2] = 0.0;
+            mvMatrix[1][0] = 0.0;
+            mvMatrix[1][1] = 1.0;
+            mvMatrix[1][2] = 0.0;
+            mvMatrix[2][0] = 0.0;
+            mvMatrix[2][1] = 0.0;
+            mvMatrix[2][2] = 1.0;
+
+            gl_Position = u_ProjectionMatrix * mvMatrix * vec4(a_VertexPosition, 1.0);
+            v_Color = a_VertexColor;
+            v_TextureCoord = a_TextureCoord;
+        }
+    </script>
+
+    <script id="billboard-fs" type="x-shader/x-fragment">
+        precision highp float;
+
+        varying vec2 v_TextureCoord;
+        varying vec3 v_Color;
+
+        uniform sampler2D u_Texture0;
+
+        void main(void) {
+
+            vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
+
+            if (finalColor.r + finalColor.g + finalColor.b < 0.2) {
+                discard;
+            }
+
+            gl_FragColor = finalColor;
+        }
+    </script>
+
+
     <script id="terrain-vs" type="x-shader/x-vertex">
         #version 100
         precision highp float;
@@ -404,8 +457,8 @@
             <label>
                 Type<br>
                 <select class="sunType" id="sunType" name="sunType">
-                    <option value="0" selected>Directional</option>
-                    <option value="1">Point light</option>
+                    <option value="0">Directional</option>
+                    <option value="1" selected>Point light</option>
                     <option value="2">Spot light</option>
                 </select>
             </label>
@@ -432,17 +485,17 @@
 
             <label>
                 Specular R
-                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularR" name="specularR" value="0.4">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularR" name="specularR" value="0.2">
             </label>
 
             <label>
                 Specular G
-                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularG" name="specularG" value="0.4">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularG" name="specularG" value="0.2">
             </label>
 
             <label>
                 Specular B
-                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularB" name="specularB" value="0.4">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularB" name="specularB" value="0.2">
             </label>
 
             <br>

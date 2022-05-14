@@ -102,7 +102,7 @@
             const velocityVector = getVelocity(
                 this.points[sceneObjectData.nextNodeNum],
                 sceneObjectData.sceneObject.position,
-                (500 * delta / 1000)
+                (50 * delta / 1000)
             );
 
             sceneObjectData.velocity = velocityVector;
