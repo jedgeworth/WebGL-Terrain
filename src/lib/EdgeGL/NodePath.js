@@ -36,7 +36,7 @@
             new Vector3(2000.0, 500.0, 0.0)
         ];
 
-        this.threshold = 1.0;
+        this.threshold = 10.0;
         this.mode = modesEnum.LOOP;
 
         this.sceneObjects = [];
@@ -90,10 +90,10 @@
 
             sceneObjectData.velocity = velocityVector;
 
-            sceneObjectData.sceneObject.position = addVector(
+            sceneObjectData.sceneObject.setPositionVector(addVector(
                 sceneObjectData.sceneObject.position,
                 velocityVector
-            );
+            ));
 
             const rotation = radToDeg( angleForVector(sceneObjectData.velocity) );
             sceneObjectData.sceneObject.yaw = rotation;
@@ -107,10 +107,10 @@
 
             sceneObjectData.velocity = velocityVector;
 
-            sceneObjectData.sceneObject.position = addVector(
+            sceneObjectData.sceneObject.setPositionVector(addVector(
                 sceneObjectData.sceneObject.position,
                 velocityVector
-            );
+            ));
         }
     }
 

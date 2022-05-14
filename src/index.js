@@ -201,9 +201,9 @@ function startGlContext() {
 
         const sunLight = new Light(gl, "0");
         sunLight.setDirection(1.0, -1.0, 1.0);
-        sunLight.setAmbient(0.4, 0.4, 0.4);
-        sunLight.setDiffuse(1.0, 1.0, 1.0);
-        sunLight.setSpecular(1.0, 1.0, 1.0);
+        sunLight.setAmbient(0.3, 0.3, 0.3);
+        sunLight.setDiffuse(0.7, 0.7, 0.7);
+        sunLight.setSpecular(0.4, 0.4, 0.4);
         sunLight.setRenderPosition(500, 500, 500);
         appRegistry.lights.light0 = sunLight;
 

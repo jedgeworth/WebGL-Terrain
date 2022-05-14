@@ -61,6 +61,7 @@
 
         this.renderMode = this.gl.TRIANGLES;
         this.originalRenderMode = this.renderMode;
+
     }
 
     /**
@@ -82,15 +83,10 @@
         this.position.x = x;
         this.position.y = y;
         this.position.z = z;
-
-        //this.position.setElements([x, y ,z]);
     }
 
-    setPositionArray(position) {
-        this.position.x = position[0];
-        this.position.y = position[1];
-        this.position.z = position[2];
-        //this.position.setElements(position);
+    setPositionVector(position) {
+        this.position = position;
     }
 
     addSceneObject(sceneObject) {

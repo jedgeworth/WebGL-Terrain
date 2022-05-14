@@ -111,16 +111,19 @@
 
         void main(void) {
 
-            vec4 vertex = u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
+            vec4 mvVertex = u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
             v_Normal = vec3(u_NormalMatrix * vec4(a_VertexNormal, 1.0));
             v_RawNormal = a_VertexNormal;
-            v_EyeVec = vec3(vertex.xyz);
+            v_EyeVec = -vec3(a_VertexPosition);
 
-            // Point light
-            v_Light0PointPosition = vec3(u_Light0Position - a_VertexPosition);
+            if (u_Light0Type == 0) {
+                v_Light0PointPosition = u_Light0Position;
+            } else {
+                v_Light0PointPosition = -(u_Light0Position - a_VertexPosition);
+            }
 
             v_TextureCoord = a_TextureCoord;
-            v_FogDepth = (u_ProjectionMatrix * vertex).z;
+            v_FogDepth = (u_ProjectionMatrix * mvVertex).z;
 
             //
             gl_PointSize = 2.0;
@@ -170,14 +173,7 @@
         // Uses vertex normals combined with a texture's normal map.
         vec4 lighting() {
 
-            vec3 L;
-
-            if (u_Light0Type == 0) {
-                L = normalize( u_Light0Position );
-            } else {
-                L = normalize( v_Light0PointPosition );
-            }
-
+            vec3 L = normalize( v_Light0PointPosition );
             vec3 N = normalize( v_Normal );
 
             if (u_UseNormalMapping) {
@@ -421,32 +417,32 @@
 
             <label>
                 Diffuse R
-                <input class="diffuse" type="range" min="0.0" max="1" step="0.01" id="diffuseR" name="diffuseR" value="0.7">
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.1" id="diffuseR" name="diffuseR" value="0.7">
             </label>
 
             <label>
                 Diffuse G
-                <input class="diffuse" type="range" min="0.0" max="1" step="0.01"  id="diffuseG" name="diffuseG" value="0.7">
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.1"  id="diffuseG" name="diffuseG" value="0.7">
             </label>
 
             <label>
                 Diffuse B
-                <input class="diffuse" type="range" min="0.0" max="1" step="0.01"  id="diffuseB" name="diffuseB" value="0.7">
+                <input class="diffuse" type="range" min="0.0" max="1" step="0.1"  id="diffuseB" name="diffuseB" value="0.7">
             </label>
 
             <label>
                 Specular R
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularR" name="specularR" value="0.16">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularR" name="specularR" value="0.4">
             </label>
 
             <label>
                 Specular G
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularG" name="specularG" value="0.16">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularG" name="specularG" value="0.4">
             </label>
 
             <label>
                 Specular B
-                <input class="specular" type="range" min="0.0" max="1" step="0.01"  id="specularB" name="specularB" value="0.16">
+                <input class="specular" type="range" min="0.0" max="1" step="0.1"  id="specularB" name="specularB" value="0.4">
             </label>
 
             <br>

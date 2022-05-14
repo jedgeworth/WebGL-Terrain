@@ -61,7 +61,7 @@ module.exports = class SkyDome {
         const position = this.camera.getPosition();
         position[1] -= 100.0;
 
-        this.domeSceneObject.setPositionArray(position);
-        this.floorSceneObject.setPositionArray(position);
+        this.domeSceneObject.setPosition(position[0], position[1], position[2]);
+        this.floorSceneObject.setPosition(position[0], position[1], position[2]);
     }
 }

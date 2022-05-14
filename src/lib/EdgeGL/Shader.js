@@ -153,10 +153,11 @@ module.exports = class Shader {
             let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
             let light0Shininess = this.gl.getUniformLocation(this.shaderProgram, `u_Shininess`);
             let light0Type = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Type`);
+            let useNormalMapping = this.gl.getUniformLocation(this.shaderProgram, "u_UseNormalMapping");
 
-
+            this.gl.uniform1i(useNormalMapping, 1);
             this.gl.uniform1i(useLighting, 1);
-            this.gl.uniform3fv(light0Direction, lightObject.position.flatten());
+            this.gl.uniform3fv(light0Direction, lightObject.getPosition().flatten());
             this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
             this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
             this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());

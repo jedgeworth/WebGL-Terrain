@@ -46,7 +46,7 @@ module.exports = class Light {
     setType(type) {
         this.type = type;
 
-        this.updateSceneObjectPosition();
+        //this.updateSceneObjectPosition();
     }
 
     /**
@@ -58,24 +58,27 @@ module.exports = class Light {
         if (this.sceneObject !== null) {
             if (this.type == 0) {
                 if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0.0) {
-                    this.sceneObject.setPositionArray([
+                    this.sceneObject.setPosition(
                         this.renderPosition.x,
                         this.renderPosition.y,
-                        this.renderPosition.z
-                    ]);
+                        this.renderPosition.z,
+                        true
+                    );
                 } else {
-                    this.sceneObject.setPositionArray([
+                    this.sceneObject.setPosition(
                         this.position.x,
                         this.position.y,
-                        this.position.z
-                    ]);
+                        this.position.z,
+                        true
+                    );
                 }
             } else {
-                this.sceneObject.setPositionArray([
+                this.sceneObject.setPosition(
                     this.position.x,
                     this.position.y,
-                    this.position.z
-                ]);
+                    this.position.z,
+                    true
+                );
             }
         }
     }
@@ -88,11 +91,28 @@ module.exports = class Light {
      */
     setPosition(x, y, z) {
 
+        if (this.sceneObject) {
+            this.sceneObject.setPosition(x, y, z);
+        }
+
         this.position.x = x;
         this.position.y = y;
         this.position.z = z;
 
-        this.updateSceneObjectPosition();
+        //this.updateSceneObjectPosition();
+    }
+
+    /**
+     * Gets the position.
+     *
+     * If we have a sceneObject, we use that instead.
+     */
+    getPosition() {
+        if (this.sceneObject) {
+            return this.sceneObject.position;
+        }
+
+        return this.position;
     }
 
     /**
@@ -170,7 +190,7 @@ module.exports = class Light {
         this.renderPosition.y = y;
         this.renderPosition.z = z;
 
-        this.updateSceneObjectPosition();
+        //this.updateSceneObjectPosition();
     }
 
     randomise() {
@@ -186,7 +206,9 @@ module.exports = class Light {
     setSceneObject(sceneObject) {
         this.sceneObject = sceneObject;
 
-        this.updateSceneObjectPosition();
+        this.sceneObject.setPositionVector(this.position);
+
+        //this.updateSceneObjectPosition();
 
     }
 
