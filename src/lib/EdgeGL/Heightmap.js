@@ -28,6 +28,8 @@ module.exports = class Heightmap {
     initWithFile(fileName, callback) {
         const heightmapImage = new Image();
         this.canvas = document.createElement('canvas');
+        this.canvas.id = 'heightmap';
+        document.getElementById('debug').appendChild(this.canvas);
 
         heightmapImage.onload = () => {
             this.width = heightmapImage.width;
@@ -60,7 +62,8 @@ module.exports = class Heightmap {
             this.postProcess();
 
             // For very temporary debug purposes.
-            document.getElementById('debug').appendChild(this.canvas);
+            //document.getElementById('debug').appendChild(this.canvas);
+            this.drawToCanvas();
 
             callback();
         };
@@ -90,6 +93,8 @@ module.exports = class Heightmap {
                 this.heightValues[x][z] = 0;
             }
         }
+
+        this.drawToCanvas();
 
         for (let i = 0; i < countSteps; i += 1) {
             x1 = Math.random() * this.width;
@@ -163,7 +168,12 @@ module.exports = class Heightmap {
      */
     drawToCanvas() {
 
-        this.canvas = document.createElement('canvas');
+        this.canvas.style.width = '200px';
+        this.canvas.style.height = '200px';
+
+        //document.getElementById('debug').appendChild(this.canvas);
+
+
         let ctx = this.canvas.getContext('2d');
 
         this.canvas.width = this.width;
@@ -179,10 +189,7 @@ module.exports = class Heightmap {
             }
         }
 
-        this.canvas.style.width = '100px';
-        this.canvas.style.height = '100px';
 
-        document.getElementById('debug').appendChild(this.canvas);
     }
 
 

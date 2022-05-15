@@ -53,13 +53,6 @@ function loadModels() {
     // Load Heightmap
     const heightmap = new Heightmap();
 
-    // heightmap.initWithFaultLine(128, 128, 1, () => {
-    //     appRegistry.heightmaps.main = heightmap;
-    //     appRegistry.assetFlags.modelsLoaded = true;
-
-    //     appRegistry.assetsLoaded();
-    // });
-
     heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.assetFlags.modelsLoaded = true;
@@ -424,6 +417,25 @@ function bindWebUI(gl) {
     document.querySelector('select[class="correctD3d"]').addEventListener('change', (event) => {
         appRegistry.lightSettings.correctD3d = parseInt(document.getElementById('correctD3d').value);
     });
+
+
+    document.getElementById('faultLineForm').onsubmit = (e) => {
+
+        e.preventDefault();
+
+        const w = document.getElementById('newWidth').value;
+        const h = document.getElementById('newHeight').value;
+        const steps = document.getElementById('newSteps').value;
+
+        appRegistry.heightmaps.main.initWithFaultLine(w, h, steps, () => {
+            const terrain = new Terrain();
+            terrain.setStretch(8);
+            terrain.initWithHeightmap(appRegistry.heightmaps.main);
+            terrain.populateSceneObject(appRegistry.sceneObjects.terrain);
+            terrain.populateNormalDebugSceneObject(appRegistry.sceneObjects.terrainNormalDebug);
+        });
+
+    };
 }
 
 /**

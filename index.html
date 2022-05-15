@@ -78,6 +78,19 @@
             background:#fff;
         }
 
+        #topMiddle{
+            position:absolute;
+            top:0;
+            left:50%;
+            width:600px;
+            margin-left:-300px;
+            display:block;
+            text-align:center;
+            padding:1rem;
+            z-index:1;
+            background:#fff;
+        }
+
         #cameraDebug{
             margin-top:1rem;
         }
@@ -577,6 +590,28 @@
             </label>
 
             <div id="cameraDebug"></div>
+        </div>
+
+        <div id="topMiddle" style="display:none">
+
+            <form id="faultLineForm">
+                <label>
+                    Width
+                    <input type="number" max="256" id="newWidth" name="width" value="256" style="width:60px">
+                </label>
+
+                <label>
+                    Height
+                    <input type="number" max="256" id="newHeight" name="height" value="256" style="width:60px">
+                </label>
+
+                <label>
+                    Steps
+                    <input type="number" id="newSteps" name="steps" value="2000" style="width:60px">
+                </label>
+
+                <input type="submit" name="faultlineSubmit" value="Generate" />
+            </form>
         </div>
 
         <div id="bottomRight">
