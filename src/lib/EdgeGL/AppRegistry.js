@@ -28,6 +28,12 @@ module.exports = class AppRegistry{
 
         this.lights = {};
 
+        this.lightSettings = {
+            useNormalMapping: 1,
+            correctD3d: 1,
+            shininess: 1.0 // This is a material property and will be moved to a material object.
+        };
+
         this.textures = {};
 
         this.fogSettings = {

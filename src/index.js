@@ -131,6 +131,7 @@ function initSceneObjects(gl) {
     terrainNormalDebugObject.setEnabled(false);
     appRegistry.registerSceneObject('terrainNormalDebug', terrainNormalDebugObject, 'line', 'static');
 
+
     //
     const sunLightObject = new SceneObject(gl);
     sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
@@ -139,16 +140,38 @@ function initSceneObjects(gl) {
     sunLightObject.useLighting = false;
     appRegistry.lights.light0.setSceneObject(sunLightObject);
 
-    appRegistry.registerSceneObject('sunLight', sunLightObject, 'billboard', 'static');
+    appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
 
     const sunLightVectorObject = new SceneObject(gl);
     sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
 
     sunLightObject.addSceneObject(sunLightVectorObject);
-
     appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
 
-    appRegistry.nodePaths.zigzag.addSceneObject(sunLightObject);
+    appRegistry.nodePaths.terrainPerimeter.addSceneObject(sunLightObject);
+
+
+    //
+    const blueLightObject = new SceneObject(gl);
+    blueLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
+    blueLightObject.setTexture(appRegistry.textures.lightbulb);
+    blueLightObject.useFog = false;
+    blueLightObject.useLighting = false;
+    appRegistry.lights.light1.setSceneObject(blueLightObject);
+
+    appRegistry.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
+
+    const blueLightVectorObject = new SceneObject(gl);
+    blueLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light1.position, 20.0));
+
+    blueLightObject.addSceneObject(blueLightVectorObject);
+    appRegistry.registerSceneObject('blueLightVector', blueLightVectorObject, 'line', 'static');
+
+    appRegistry.nodePaths.planes.addSceneObject(blueLightObject);
+
+
+
+
 
     // Example of a more complicated object (TODO: port the object loader across)
     // var tankMesh = new Mesh.Init(gl);
@@ -208,6 +231,14 @@ function startGlContext() {
         sunLight.setType(1);
         appRegistry.lights.light0 = sunLight;
 
+        const blueLight = new Light(gl, "1");
+        blueLight.setDirection(1.0, -1.0, 1.0);
+        blueLight.setAmbient(0.0, 0.0, 0.3);
+        blueLight.setDiffuse(0.0, 0.0, 0.7);
+        blueLight.setSpecular(0.0, 0.0, 0.2);
+        blueLight.setType(1);
+        appRegistry.lights.light1 = blueLight;
+
         appRegistry.onAssetsLoaded = () => {
             appRegistry.createGlTextures();
 
@@ -218,7 +249,28 @@ function startGlContext() {
         };
 
 
-        appRegistry.nodePaths.zigzag = new NodePath();
+        appRegistry.nodePaths.terrainPerimeter = new NodePath();
+        appRegistry.nodePaths.terrainPerimeter.setPoints([
+            new Vector3(0.0, 500.0, 0.0),
+            new Vector3(0.0, 500.0, 2000.0),
+            new Vector3(2000.0, 500.0, 2000.0),
+            new Vector3(2000.0, 500.0, 0.0)
+        ]);
+        appRegistry.nodePaths.terrainPerimeter.setSpeed(500);
+
+
+        appRegistry.nodePaths.planes = new NodePath();
+        appRegistry.nodePaths.planes.setPoints([
+            new Vector3(-250.0, 200.0, -150.0),
+            new Vector3(300.0, 200.0, -150.0),
+
+            // new Vector3(0.0, 500.0, 2000.0),
+            // new Vector3(2000.0, 500.0, 2000.0),
+            // new Vector3(2000.0, 500.0, 0.0),
+            // new Vector3(0.0, 500.0, 0.0),
+        ]);
+        appRegistry.nodePaths.planes.setSpeed(300);
+
 
         appRegistry.registerTextureImages({
             'blank' : require('./assets/img/blank.png'),
@@ -352,15 +404,27 @@ function bindWebUI(gl) {
     });
 
     document.querySelector('input[class="shininess"]').addEventListener('change', (event) => {
-        appRegistry.lights.light0.shininess = document.getElementById('shininess').value;
+        appRegistry.lightSettings.shininess = document.getElementById('shininess').value;
     });
 
     document.querySelector('select[class="sunType"]').addEventListener('change', (event) => {
         appRegistry.lights.light0.setType(document.getElementById('sunType').value);
+
+        if (appRegistry.lights.light0.type == 0) {
+            document.getElementById('sunPosX').value = appRegistry.lights.light0.getPosition().x;
+            document.getElementById('sunPosY').value = appRegistry.lights.light0.getPosition().y;
+            document.getElementById('sunPosZ').value = appRegistry.lights.light0.getPosition().z;
+        }
+    });
+
+    document.querySelector('select[class="normalMapping"]').addEventListener('change', (event) => {
+        appRegistry.lightSettings.useNormalMapping = parseInt(document.getElementById('normalMapping').value);
+    });
+
+    document.querySelector('select[class="correctD3d"]').addEventListener('change', (event) => {
+        appRegistry.lightSettings.correctD3d = parseInt(document.getElementById('correctD3d').value);
     });
 }
-
-let testXPos = 0.0;
 
 /**
  * drawScene
@@ -379,20 +443,11 @@ function drawScene(gl) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
     appRegistry.camera.update();
     appRegistry.camera.debug('cameraDebug');
 
     appRegistry.render('nonDepth');
-
     appRegistry.render('static');
-
-    // appRegistry.sceneObjects.floor.position.setElements([testXPos, 0.0, 0.0]);
-    // appRegistry.sceneObjects.floorSub.position.setElements([testXPos, 0.0, 0.0]);
-
-
-    // appRegistry.meshes.tank.position.setElements([testXPos, 0.0, 0.0]);
-    // appRegistry.meshes.tank.render(appRegistry.shaders.base);
 
     // Handle any animated meshes.
     const currentTime = (new Date).getTime();
@@ -400,12 +455,12 @@ function drawScene(gl) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
         if (appRegistry.lights.light0.type == 1) {
-            appRegistry.nodePaths.zigzag.tick(delta);
+            appRegistry.nodePaths.terrainPerimeter.tick(delta);
         }
 
-
-        // (Call any updates on animated sceneObjects based on delta.)
-        appRegistry.render('timed', delta);
+        if (appRegistry.lights.light1.type == 1) {
+            appRegistry.nodePaths.planes.tick(delta);
+        }
     }
 
     appRegistry.lastUpdateTime = currentTime;

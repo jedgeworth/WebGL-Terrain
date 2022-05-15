@@ -29,17 +29,21 @@
       */
     constructor() {
 
-        this.points = [
-            new Vector3(0.0, 500.0, 0.0),
-            new Vector3(0.0, 500.0, 2000.0),
-            new Vector3(2000.0, 500.0, 2000.0),
-            new Vector3(2000.0, 500.0, 0.0)
-        ];
+        this.points = [];
 
+        this.speed = 50.0;
         this.threshold = 10.0;
         this.mode = modesEnum.LOOP;
 
         this.sceneObjects = [];
+    }
+
+    setPoints(points) {
+        this.points = points;
+    }
+
+    setSpeed(speed) {
+        this.speed = speed;
     }
 
     /**
@@ -85,7 +89,7 @@
             const velocityVector = getVelocity(
                 this.points[sceneObjectData.nextNodeNum],
                 sceneObjectData.sceneObject.position,
-                (50 * delta / 1000)
+                (this.speed * delta / 1000)
             );
 
             sceneObjectData.velocity = velocityVector;
@@ -102,7 +106,7 @@
             const velocityVector = getVelocity(
                 this.points[sceneObjectData.nextNodeNum],
                 sceneObjectData.sceneObject.position,
-                (50 * delta / 1000)
+                (this.speed  * delta / 1000)
             );
 
             sceneObjectData.velocity = velocityVector;

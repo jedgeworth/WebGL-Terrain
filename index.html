@@ -84,19 +84,27 @@
     </style>
 
     <script id="base-vs" type="x-shader/x-vertex">
+        precision highp float;
+        precision mediump int;
 
         attribute vec3 a_VertexNormal;
         attribute vec3 a_VertexPosition;
         attribute vec2 a_TextureCoord;
 
+        struct Light {
+            vec3 ambient;
+            vec3 diffuse;
+            vec3 specular;
+            vec3 position;
+            int type;
+        };
+
+        uniform bool u_UseNormalMap;
+        uniform bool u_CorrectD3d;
         uniform bool u_UseLighting;
         uniform bool u_UseFog;
 
-        uniform vec3 u_Light0Ambient;
-        uniform vec3 u_Light0Diffuse;
-        uniform vec3 u_Light0Specular;
-        uniform vec3 u_Light0Position;
-        uniform int u_Light0Type;
+        uniform Light u_Lights[2];
 
         uniform mat4 u_NormalMatrix;
         uniform mat4 u_ModelViewMatrix;
@@ -104,7 +112,7 @@
 
         varying vec2 v_TextureCoord;
         varying vec3 v_Normal;
-        varying vec3 v_Light0PointPosition;
+        varying vec3 v_LightPointPosition[2];
         varying vec3 v_EyeVec;
         varying float v_FogDepth;
         varying vec3 v_RawNormal;
@@ -116,10 +124,16 @@
             v_RawNormal = a_VertexNormal;
             v_EyeVec = -vec3(a_VertexPosition);
 
-            if (u_Light0Type == 0) {
-                v_Light0PointPosition = u_Light0Position;
+            if (u_Lights[0].type == 0) {
+                v_LightPointPosition[0] = u_Lights[0].position;
             } else {
-                v_Light0PointPosition = -(u_Light0Position - a_VertexPosition);
+                v_LightPointPosition[0] = -(u_Lights[0].position - a_VertexPosition);
+            }
+
+            if (u_Lights[1].type == 0) {
+                v_LightPointPosition[1] = u_Lights[1].position;
+            } else {
+                v_LightPointPosition[1] = -(u_Lights[1].position - a_VertexPosition);
             }
 
             v_TextureCoord = a_TextureCoord;
@@ -133,6 +147,16 @@
 
     <script id="base-fs" type="x-shader/x-fragment">
         precision highp float;
+        precision mediump int;
+
+        struct Light {
+            vec3 ambient;
+            vec3 diffuse;
+            vec3 specular;
+            vec3 position;
+            int type;
+        };
+
 
         uniform sampler2D u_Texture0;
         uniform sampler2D u_TextureNormal0;
@@ -140,15 +164,13 @@
         uniform sampler2D u_Texture1;
         uniform sampler2D u_TextureNormal1;
 
-        uniform bool u_UseNormalMapping;
+        uniform bool u_UseNormalMap;
+        uniform bool u_CorrectD3d;
         uniform bool u_UseLighting;
         uniform bool u_UseFog;
 
-        uniform vec3 u_Light0Ambient;
-        uniform vec3 u_Light0Diffuse;
-        uniform vec3 u_Light0Specular;
-        uniform vec3 u_Light0Position;
-        uniform int u_Light0Type;
+        uniform Light u_Lights[2];
+
         uniform float u_Shininess;
 
 
@@ -161,7 +183,7 @@
         uniform float u_FogFar;
 
         varying vec2 v_TextureCoord;
-        varying vec3 v_Light0PointPosition;
+        varying vec3 v_LightPointPosition[2];
         varying vec3 v_Normal;
         varying vec3 v_RawNormal;
         varying vec3 v_EyeVec;
@@ -171,17 +193,19 @@
         //
         // Calculate the lighting.
         // Uses vertex normals combined with a texture's normal map.
-        vec4 lighting() {
+        vec4 lighting(Light light, vec3 lightPosition) {
 
-            vec3 L = normalize( v_Light0PointPosition );
+            vec3 L = normalize( lightPosition );
             vec3 N = normalize( v_Normal );
 
-            if (u_UseNormalMapping) {
+            if (u_UseNormalMap) {
                 vec3 normalColor = texture2D(u_Texture1, v_TextureCoord).rgb;
 
                 // Assume normal map is D3D - if so we flip the green value.
                 // @todo: Do this on the Texture() loader.
-                normalColor.g *= -1.0;
+                if (u_CorrectD3d) {
+                    normalColor.g *= -1.0;
+                }
 
                 vec3 fragmentNormal = normalize( normalColor * 2.0 - 1.0 );
                 N = normalize(fragmentNormal + v_Normal);
@@ -189,16 +213,16 @@
 
             float lambertTerm = dot(N, L);
 
-            vec4 Ia = vec4(u_Light0Ambient, 1.0) * u_MaterialAmbient;
+            vec4 Ia = vec4(light.ambient, 1.0) * u_MaterialAmbient;
             vec4 Id = vec4(0.0, 0.0, 0.0, 1.0);
             vec4 Is = vec4(0.0, 0.0, 0.0, 1.0);
 
             if (lambertTerm > 0.0) {
-                Id = vec4(u_Light0Diffuse, 1.0) * u_MaterialDiffuse * lambertTerm;
+                Id = vec4(light.diffuse, 1.0) * u_MaterialDiffuse * lambertTerm;
                 vec3 E = normalize( v_EyeVec );
                 vec3 R = reflect(L, N);
                 float specular = pow( max( dot(R, E), 0.0 ), u_Shininess );
-                Is = vec4(u_Light0Specular, 1.0) * u_MaterialSpecular * specular;
+                Is = vec4(light.specular, 1.0) * u_MaterialSpecular * specular;
             }
 
             return (Ia + Id) + Is;
@@ -218,7 +242,10 @@
           vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
 
           if (u_UseLighting) {
-            finalColor = finalColor * lighting();
+            finalColor = finalColor * (
+                lighting(u_Lights[0], v_LightPointPosition[0]) +
+                lighting(u_Lights[1], v_LightPointPosition[1])
+            );
           }
 
           if (u_UseFog) {
@@ -229,12 +256,17 @@
           //    finalColor.r = 255.0;
           //}
 
+          //if (u_UseNormalMap) {
+          //  finalColor.r = 1.0;
+          //}
+
           gl_FragColor = finalColor;
         }
     </script>
 
 
     <script id="line-vs" type="x-shader/x-vertex">
+        #version 100
         attribute highp vec3 a_VertexPosition;
         attribute highp vec3 a_VertexColor;
 
@@ -250,6 +282,7 @@
     </script>
 
     <script id="line-fs" type="x-shader/x-fragment">
+        #version 100
         varying highp vec3 v_Color;
 
         void main(void) {
@@ -259,6 +292,7 @@
 
 
     <script id="billboard-vs" type="x-shader/x-vertex">
+        #version 100
         precision highp float;
 
         attribute vec3 a_VertexPosition;
@@ -291,6 +325,7 @@
     </script>
 
     <script id="billboard-fs" type="x-shader/x-fragment">
+        #version 100
         precision highp float;
 
         varying vec2 v_TextureCoord;
@@ -462,6 +497,22 @@
                     <option value="2">Spot light</option>
                 </select>
             </label>
+            <br><br>
+            <label>
+                Normal mapping<br>
+                <select class="normalMapping" id="normalMapping" name="normalMapping">
+                    <option value="0">Off</option>
+                    <option value="1" selected>On</option>
+                </select>
+            </label><br><br>
+
+            <label>
+                Correct D3D<br>
+                <select class="correctD3d" id="correctD3d" name="correctD3d">
+                    <option value="0">Off</option>
+                    <option value="1" selected>On</option>
+                </select>
+            </label><br><br>
 
             <label>
                 Shininess
@@ -537,7 +588,7 @@
         </div>
 
         <div id="bottomLeft">
-            &copy; 2022 <a href="https://jamesedgeworth.com">James Edgeworth</a>
+            WebGL Demo by <a href="https://jamesedgeworth.com">James Edgeworth</a>
         </div>
 
         <canvas id="glcanvas" style="width:100%; height:100%">

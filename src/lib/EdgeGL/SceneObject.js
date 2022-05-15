@@ -282,7 +282,7 @@
         appRegistry.camera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
 
         this.shaderProgram.use();
-        this.shaderProgram.setLightUniforms(appRegistry.lights.light0, this.useLighting);
+        this.shaderProgram.setLightUniforms(appRegistry.lights, appRegistry.lightSettings, this.useLighting);
         this.shaderProgram.setFogUniforms(appRegistry.fogSettings, this.useFog);
 
         this.shaderProgram.setMatrixUniforms(

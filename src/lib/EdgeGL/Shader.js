@@ -135,38 +135,31 @@ module.exports = class Shader {
         this.gl.useProgram(null);
     }
 
-
     /**
      * Sets lighting from a Light().
      * @param {*} lightObject Instantiated Light() object.
      */
-    setLightUniforms(lightObject, enabled) {
-
-        let useLighting = this.gl.getUniformLocation(this.shaderProgram, 'u_UseLighting');
+    setLightUniforms(lights, lightSettings, enabled) {
 
         if (enabled) {
-            const i = lightObject.lightIndex;
 
-            let light0Direction = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Position`);
-            let light0Ambient = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Ambient`);
-            let light0Diffuse = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Diffuse`);
-            let light0Specular = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Specular`);
-            let light0Shininess = this.gl.getUniformLocation(this.shaderProgram, `u_Shininess`);
-            let light0Type = this.gl.getUniformLocation(this.shaderProgram, `u_Light${i}Type`);
-            let useNormalMapping = this.gl.getUniformLocation(this.shaderProgram, "u_UseNormalMapping");
+            this.setUniform1i('u_UseLighting', 1);
+            this.setUniform1i('u_UseNormalMap', lightSettings.useNormalMapping);
+            this.setUniform1i('u_CorrectD3d', lightSettings.correctD3d);
+            this.setUniform1f('u_Shininess', lightSettings.shininess);
 
-            this.gl.uniform1i(useNormalMapping, 1);
-            this.gl.uniform1i(useLighting, 1);
-            this.gl.uniform3fv(light0Direction, lightObject.getPosition().flatten());
-            this.gl.uniform3fv(light0Ambient, lightObject.ambient.flatten());
-            this.gl.uniform3fv(light0Diffuse, lightObject.diffuse.flatten());
-            this.gl.uniform3fv(light0Specular, lightObject.specular.flatten());
-            this.gl.uniform1f(light0Shininess, lightObject.shininess);
-            this.gl.uniform1i(light0Type, lightObject.type);
+            Object.entries(lights).forEach(([key, lightObject]) => {
+                const i = lightObject.lightIndex;
+
+                this.setUniform3fv(`u_Lights[${i}].position`, lightObject.getPosition().flatten());
+                this.setUniform3fv(`u_Lights[${i}].ambient`, lightObject.ambient.flatten());
+                this.setUniform3fv(`u_Lights[${i}].diffuse`, lightObject.diffuse.flatten());
+                this.setUniform3fv(`u_Lights[${i}].specular`, lightObject.specular.flatten());
+                this.setUniform1i(`u_Lights[${i}].type`, lightObject.type);
+            });
         } else {
-            this.gl.uniform1i(useLighting, 0);
+            this.setUniform1i('u_UseLighting', 0);
         }
-
     }
 
     /**
@@ -174,19 +167,13 @@ module.exports = class Shader {
      */
     setFogUniforms(fogSettings, enabled) {
 
-        let useFog = this.gl.getUniformLocation(this.shaderProgram, 'u_UseFog');
-
         if (enabled) {
-            let fogColorUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogColor");
-            let fogNearUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogNear");
-            let fogFarUniform = this.gl.getUniformLocation(this.shaderProgram, "u_FogFar");
-
-            this.gl.uniform1i(useFog, 1);
-            this.gl.uniform4fv(fogColorUniform, fogSettings.color);
-            this.gl.uniform1f(fogNearUniform, fogSettings.near);
-            this.gl.uniform1f(fogFarUniform, fogSettings.far);
+            this.setUniform1i('u_UseFog', 1);
+            this.setUniform4fv('u_FogColor', fogSettings.color);
+            this.setUniform1f('u_FogNear', fogSettings.near);
+            this.setUniform1f('u_FogFar', fogSettings.far);
         } else {
-            this.gl.uniform1i(useFog, 0);
+            this.setUniform1i('u_UseFog', 0);
         }
     }
 
@@ -198,16 +185,12 @@ module.exports = class Shader {
      */
     setMatrixUniforms(perspectiveMatrix, mvMatrix) {
 
-        let projectionMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ProjectionMatrix");
-        let modelViewMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_ModelViewMatrix");
-        let normalMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "u_NormalMatrix");
-
         let normalMatrix = mvMatrix.inverse();
         normalMatrix = normalMatrix.transpose();
 
-        this.gl.uniformMatrix4fv(projectionMatrixUniform, false, new Float32Array(perspectiveMatrix.flatten()));
-        this.gl.uniformMatrix4fv(modelViewMatrixUniform, false, new Float32Array(mvMatrix.flatten()));
-        this.gl.uniformMatrix4fv(normalMatrixUniform, false, new Float32Array(normalMatrix.flatten()));
+        this.setUniformMatrix4fv('u_ProjectionMatrix', new Float32Array(perspectiveMatrix.flatten()));
+        this.setUniformMatrix4fv('u_ModelViewMatrix', new Float32Array(mvMatrix.flatten()));
+        this.setUniformMatrix4fv('u_NormalMatrix', new Float32Array(normalMatrix.flatten()));
     }
 
     /**
@@ -278,6 +261,56 @@ module.exports = class Shader {
         }
 
         return theSource;
+    }
+
+    /**
+     * Shortcut method to set a uniform1i.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+     setUniform1i(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+        this.gl.uniform1i(uniform, value);
+    }
+
+    /**
+     * Shortcut method to set a uniform1f.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+    setUniform1f(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+        this.gl.uniform1f(uniform, value);
+    }
+
+    /**
+     * Shortcut method to set a uniform3fv.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+    setUniform3fv(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+        this.gl.uniform3fv(uniform, value);
+    }
+
+    /**
+     * Shortcut method to set a uniform4fv.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+    setUniform4fv(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+        this.gl.uniform4fv(uniform, value);
+    }
+
+    /**
+     * Shortcut method to set a uniformMatrix4fv.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+    setUniformMatrix4fv(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+        this.gl.uniformMatrix4fv(uniform, false, value);
     }
 }
 

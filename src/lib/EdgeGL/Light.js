@@ -37,9 +37,6 @@ module.exports = class Light {
         // 1: Point light
         // 2: Spot light
         this.type = 0;
-
-        // This is a material property and will be moved to a material object.
-        this.shininess = 1.0;
     }
 
 
