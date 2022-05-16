@@ -290,6 +290,8 @@
             appRegistry.camera.matrices.mvMatrix
         );
 
+        //this.checkBuffers(this.shaderProgram);
+
         this.shaderProgram.enableAttributes();
 
         // Vertices
@@ -314,15 +316,17 @@
         if (this.texture0 && this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTexture);
-            this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_Texture0"), 0);
+
+            this.shaderProgram.setUniform1i("u_Texture0", 0);
 
             if (this.texture0.glTextureNormal) {
                 this.gl.activeTexture(this.gl.TEXTURE1);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureNormal);
-                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_TextureNormal0"), 1);
-                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_UseNormalMapping"), 1);
+
+                this.shaderProgram.setUniform1i("u_TextureNormal0", 0);
+                this.shaderProgram.setUniform1i("u_UseNormalMapping", 1);
             } else {
-                this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram.shaderProgram, "u_UseNormalMapping"), 0);
+                this.shaderProgram.setUniform1i("u_UseNormalMapping", 0);
             }
 
             this.gl.enableVertexAttribArray(this.shaderProgram.textureCoordAttribute);
@@ -350,6 +354,7 @@
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
         this.shaderProgram.disableAttributes();
+        this.shaderProgram.stop();
     }
 
     /**

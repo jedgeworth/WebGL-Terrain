@@ -35,6 +35,8 @@ module.exports = class Shader {
         this.hasVertexNormalAttribute = false;
         this.hasTextureCoordAttribute = false;
 
+        this.variableLog = [];
+
         this.compile(scriptElementId);
     }
 
@@ -126,6 +128,8 @@ module.exports = class Shader {
      */
     use() {
         this.gl.useProgram(this.shaderProgram);
+
+        this.variableLog = [];
     }
 
     /**
@@ -270,7 +274,14 @@ module.exports = class Shader {
      */
      setUniform1i(name, value) {
         const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
-        this.gl.uniform1i(uniform, value);
+
+        if (uniform) {
+            this.gl.uniform1i(uniform, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
     }
 
     /**
@@ -280,7 +291,14 @@ module.exports = class Shader {
      */
     setUniform1f(name, value) {
         const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
-        this.gl.uniform1f(uniform, value);
+
+        if (uniform) {
+            this.gl.uniform1f(uniform, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
     }
 
     /**
@@ -290,7 +308,14 @@ module.exports = class Shader {
      */
     setUniform3fv(name, value) {
         const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
-        this.gl.uniform3fv(uniform, value);
+
+        if (uniform) {
+            this.gl.uniform3fv(uniform, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
     }
 
     /**
@@ -300,7 +325,14 @@ module.exports = class Shader {
      */
     setUniform4fv(name, value) {
         const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
-        this.gl.uniform4fv(uniform, value);
+
+        if (uniform) {
+            this.gl.uniform4fv(uniform, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
     }
 
     /**
@@ -310,7 +342,14 @@ module.exports = class Shader {
      */
     setUniformMatrix4fv(name, value) {
         const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
-        this.gl.uniformMatrix4fv(uniform, false, value);
+
+        if (uniform) {
+            this.gl.uniformMatrix4fv(uniform, false, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
     }
 }
 

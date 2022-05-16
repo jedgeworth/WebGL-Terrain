@@ -53,6 +53,13 @@ function loadModels() {
     // Load Heightmap
     const heightmap = new Heightmap();
 
+    // heightmap.initWithFaultLine(256, 256, 0, () => {
+    //     appRegistry.heightmaps.main = heightmap;
+    //     appRegistry.assetFlags.modelsLoaded = true;
+
+    //     appRegistry.assetsLoaded();
+    // });
+
     heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
         appRegistry.heightmaps.main = heightmap;
         appRegistry.assetFlags.modelsLoaded = true;
@@ -206,8 +213,10 @@ function startGlContext() {
 
     //
     appRegistry.camera = new Camera();
-    appRegistry.camera.setPosition(-160, 440, -63);
-    appRegistry.camera.setRotation(19, -128);
+    //appRegistry.camera.setPosition(-160, 440, -63);
+    //appRegistry.camera.setRotation(19, -128);
+    appRegistry.camera.setPosition(-478, 986, -866);
+    appRegistry.camera.setRotation(32, -140);
 
     //
     appRegistry.keyboardHandler = new KeyboardHandler(window, document);
@@ -217,16 +226,16 @@ function startGlContext() {
 
         const sunLight = new Light(gl, "0");
         sunLight.setDirection(1.0, -1.0, 1.0);
-        sunLight.setAmbient(0.3, 0.3, 0.3);
+        sunLight.setAmbient(0.3, 0.3, 0.1);
         sunLight.setDiffuse(0.7, 0.7, 0.7);
         sunLight.setSpecular(0.2, 0.2, 0.2);
         sunLight.setRenderPosition(500, 500, 500);
-        sunLight.setType(1);
+        sunLight.setType(0);
         appRegistry.lights.light0 = sunLight;
 
         const blueLight = new Light(gl, "1");
         blueLight.setDirection(1.0, -1.0, 1.0);
-        blueLight.setAmbient(0.0, 0.0, 0.3);
+        blueLight.setAmbient(0.0, 0.0, 0.1);
         blueLight.setDiffuse(0.0, 0.0, 0.7);
         blueLight.setSpecular(0.0, 0.0, 0.2);
         blueLight.setType(1);
@@ -299,7 +308,7 @@ function startGlContext() {
         gl.depthFunc(gl.LEQUAL);
 
         //gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
+        //gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
     }
 }
@@ -466,11 +475,11 @@ function drawScene(gl) {
     if (appRegistry.lastUpdateTime) {
         const delta = currentTime - appRegistry.lastUpdateTime;
 
-        if (appRegistry.lights.light0.type == 1) {
+        if (appRegistry.lights.light0.type != 0) {
             appRegistry.nodePaths.terrainPerimeter.tick(delta);
         }
 
-        if (appRegistry.lights.light1.type == 1) {
+        if (appRegistry.lights.light1.type != 0) {
             appRegistry.nodePaths.planes.tick(delta);
         }
     }

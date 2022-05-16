@@ -77,6 +77,11 @@ module.exports = class Heightmap {
      */
     initWithFaultLine(width, height, countSteps, callback) {
 
+        const heightmapImage = new Image();
+        this.canvas = document.createElement('canvas');
+        this.canvas.id = 'heightmap';
+        document.getElementById('debug').appendChild(this.canvas);
+
         this.width = width;
         this.height = height;
 
