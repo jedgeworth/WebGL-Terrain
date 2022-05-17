@@ -138,7 +138,8 @@
 
             vec4 v4VertexPosition = vec4(a_VertexPosition, 1.0);
 
-            v_VertexNormal = vec3( u_NormalMatrix * vec4(a_VertexNormal, 1.0) );
+            //v_VertexNormal = vec3( u_NormalMatrix * vec4(a_VertexNormal, 1.0) );
+            v_VertexNormal = a_VertexNormal;
             v_EyeVector = -vec3(a_VertexPosition);
             v_VertexPosition = a_VertexPosition;
 
@@ -229,6 +230,7 @@
                 // @todo: Do this on the Texture() loader.
                 if (u_CorrectD3d) {
                     normalColor.g *= -1.0;
+                    //normalColor.g = 1.0 - normalColor.g;
                 }
 
                 vec3 fragmentNormal = normalize( normalColor * 2.0 - 1.0 );
@@ -299,9 +301,9 @@
           //    finalColor.r = 255.0;
           //}
 
-          //gl_FragColor.r = normalize(v_VertexNormal.x);
-          //gl_FragColor.g = normalize(v_VertexNormal.y);
-          //gl_FragColor.b = normalize(v_VertexNormal.z);
+          //finalColor.r = v_VertexNormal.x * 0.5 + 1.0;
+          //finalColor.g = v_VertexNormal.y * 0.5 + 1.0;
+          //finalColor.b = v_VertexNormal.z * 0.5 + 1.0;
 
           gl_FragColor = finalColor;
         }
