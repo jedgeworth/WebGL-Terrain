@@ -109,6 +109,7 @@
             vec3 diffuse;
             vec3 specular;
             vec3 position;
+            vec3 direction;
             int type;
         };
 
@@ -119,7 +120,7 @@
 
         uniform Light u_Lights[2];
 
-        uniform mat4 u_NormalMatrix;
+        uniform mat3 u_NormalMatrix;
         uniform mat4 u_ModelViewMatrix;
         uniform mat4 u_ProjectionMatrix;
         uniform vec3 u_CameraWorldPosition;
@@ -129,7 +130,7 @@
         varying vec3 v_VertexNormal;
 
         varying vec3 v_EyeVector;
-        varying vec3 v_LightPointPosition[2];
+        varying vec3 v_LightVectors[2];
 
         varying vec3 v_RawNormal;
         varying float v_FogDepth;
@@ -138,7 +139,7 @@
 
             vec4 v4VertexPosition = vec4(a_VertexPosition, 1.0);
 
-            //v_VertexNormal = vec3( u_NormalMatrix * vec4(a_VertexNormal, 1.0) );
+            //v_VertexNormal = u_NormalMatrix * a_VertexNormal;
             v_VertexNormal = a_VertexNormal;
             v_EyeVector = -vec3(a_VertexPosition);
             v_VertexPosition = a_VertexPosition;
@@ -147,15 +148,15 @@
             v_FogDepth = (u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition).z;
 
             if (u_Lights[0].type == 0) {
-                v_LightPointPosition[0] = normalize(u_Lights[0].position);
+                v_LightVectors[0] = normalize(u_Lights[0].direction);
             } else {
-                v_LightPointPosition[0] = -(u_Lights[0].position - v_VertexPosition);
+                v_LightVectors[0] = -(u_Lights[0].position - v_VertexPosition);
             }
 
             if (u_Lights[1].type == 0) {
-                v_LightPointPosition[1] = normalize(u_Lights[1].position);
+                v_LightVectors[1] = normalize(u_Lights[1].direction);
             } else {
-                v_LightPointPosition[1] = -(u_Lights[1].position - v_VertexPosition);
+                v_LightVectors[1] = -(u_Lights[1].position - v_VertexPosition);
             }
 
             v_TextureCoord = a_TextureCoord;
@@ -174,6 +175,7 @@
             vec3 diffuse;
             vec3 specular;
             vec3 position;
+            vec3 direction;
             int type;
         };
 
@@ -202,7 +204,7 @@
         varying vec3 v_VertexNormal;
 
         varying vec3 v_EyeVector;
-        varying vec3 v_LightPointPosition[2];
+        varying vec3 v_LightVectors[2];
 
         varying vec3 v_RawNormal;
         varying float v_FogDepth;
@@ -218,9 +220,9 @@
 
         ////////////////////////////////////////////////////////////////////////
 
-        vec4 lighting(Light light, vec3 lightPosition) {
+        vec4 lighting(Light light, vec3 lightVector) {
 
-            vec3 L = normalize( lightPosition );
+            vec3 L = normalize( lightVector );
             vec3 N = normalize( -v_VertexNormal );
 
             if (u_UseNormalMap) {
@@ -230,7 +232,6 @@
                 // @todo: Do this on the Texture() loader.
                 if (u_CorrectD3d) {
                     normalColor.g *= -1.0;
-                    //normalColor.g = 1.0 - normalColor.g;
                 }
 
                 vec3 fragmentNormal = normalize( normalColor * 2.0 - 1.0 );
@@ -242,7 +243,7 @@
             vec4 diffuse = vec4(0.0, 0.0, 0.0, 1.0);
             vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
 
-            float distance = length(lightPosition);
+            float distance = length(lightVector);
 
             if ((light.type == 2 && distance < 900.0) || light.type != 2) {
                 float lambertTerm = dot(N, L);
@@ -268,7 +269,6 @@
 
             }
 
-
             return ambient + diffuse + specular;
         }
 
@@ -288,8 +288,8 @@
 
           if (u_UseLighting) {
             finalColor *= (
-                lighting(u_Lights[0], v_LightPointPosition[0]) +
-                lighting(u_Lights[1], v_LightPointPosition[1])
+                lighting(u_Lights[0], v_LightVectors[0]) +
+                lighting(u_Lights[1], v_LightVectors[1])
             );
           }
 

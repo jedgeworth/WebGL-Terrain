@@ -15,6 +15,17 @@ const Color4 = require('./types/Color4');
 module.exports = class Light {
 
     /**
+     * Creates a light.
+     *
+     * Note that position and direction are used in different means depending
+     * on the light's type.
+     *
+     * - Directional lights: The direction is used for the lighting calculation
+     * whilst position defines where the object appears in the scene.
+     * - Point lights: The position is used in the lighting calculations and
+     * where it appears in the scene.
+     * - Spot light: The position is used to calculate the lighting whilst the
+     * direction specifies which way the light's cone is facing.
      *
      * @param {*} glContext glContext object.
      */
@@ -23,8 +34,6 @@ module.exports = class Light {
         this.gl = glContext;
         this.lightIndex = lightIndex;
         this.sceneObject = null;
-
-        this.renderPosition = new Vector3();
 
         this.position = new Vector3();
         this.direction = new Vector3();
@@ -42,42 +51,6 @@ module.exports = class Light {
 
     setType(type) {
         this.type = type;
-
-        //this.updateSceneObjectPosition();
-    }
-
-    /**
-     * Depending on the light type, this updates the scene object to use
-     * the correct position.
-     */
-    updateSceneObjectPosition() {
-
-        if (this.sceneObject !== null) {
-            if (this.type == 0) {
-                if (this.renderPosition.x + this.renderPosition.y + this.renderPosition.z != 0.0) {
-                    this.sceneObject.setPosition(
-                        this.renderPosition.x,
-                        this.renderPosition.y,
-                        this.renderPosition.z,
-                        true
-                    );
-                } else {
-                    this.sceneObject.setPosition(
-                        this.position.x,
-                        this.position.y,
-                        this.position.z,
-                        true
-                    );
-                }
-            } else {
-                this.sceneObject.setPosition(
-                    this.position.x,
-                    this.position.y,
-                    this.position.z,
-                    true
-                );
-            }
-        }
     }
 
     /**
@@ -95,8 +68,6 @@ module.exports = class Light {
         this.position.x = x;
         this.position.y = y;
         this.position.z = z;
-
-        //this.updateSceneObjectPosition();
     }
 
     /**
@@ -121,7 +92,27 @@ module.exports = class Light {
      * @param {*} z
      */
     setDirection(x, y, z) {
-        this.setPosition(x, y, z);
+
+        if (this.sceneObject) {
+            this.sceneObject.setDirection(x, y, z);
+        }
+
+        this.direction.x = x;
+        this.direction.y = y;
+        this.direction.z = z;
+    }
+
+    /**
+     * Gets the direction.
+     *
+     * If we have a sceneObject, we use that instead.
+     */
+     getDirection() {
+        if (this.sceneObject) {
+            return this.sceneObject.direction;
+        }
+
+        return this.direction;
     }
 
 
@@ -171,24 +162,6 @@ module.exports = class Light {
         this.specular.a = a;
     }
 
-    /**
-     * Sets the render positon of the light.
-     *
-     * If used, the light will display from this location rather than the
-     * light position. E.g,if we have a sunlight and want the icon to appear in the
-     * scene somewhere convenient.
-     *
-     * @param {*} x
-     * @param {*} y
-     * @param {*} z
-     */
-    setRenderPosition(x, y, z) {
-        this.renderPosition.x = x;
-        this.renderPosition.y = y;
-        this.renderPosition.z = z;
-
-        //this.updateSceneObjectPosition();
-    }
 
     randomise() {
         this.diffuse.r = Math.random();
@@ -204,8 +177,6 @@ module.exports = class Light {
         this.sceneObject = sceneObject;
 
         this.sceneObject.setPositionVector(this.position);
-
-        //this.updateSceneObjectPosition();
 
     }
 

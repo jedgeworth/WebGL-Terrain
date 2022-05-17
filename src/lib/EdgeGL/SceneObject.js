@@ -57,6 +57,9 @@
         this.yaw = 0.0;
         this.roll = 0.0;
 
+        // If set, will update pitch, yaw, roll.
+        this.direction = new Vector3(0.0, 0.0, 0.0);
+
         this.flipYaw = 0.0;
 
         this.renderMode = this.gl.TRIANGLES;
@@ -87,6 +90,12 @@
 
     setPositionVector(position) {
         this.position = position;
+    }
+
+    setDirection(x, y, z) {
+        this.direction.x = x;
+        this.direction.y = y;
+        this.direction.z = z;
     }
 
     addSceneObject(sceneObject) {

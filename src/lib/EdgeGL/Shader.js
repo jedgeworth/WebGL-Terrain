@@ -156,6 +156,7 @@ module.exports = class Shader {
                 const i = lightObject.lightIndex;
 
                 this.setUniform3fv(`u_Lights[${i}].position`, lightObject.getPosition().flatten());
+                this.setUniform3fv(`u_Lights[${i}].direction`, lightObject.getDirection().flatten());
                 this.setUniform3fv(`u_Lights[${i}].ambient`, lightObject.ambient.flatten());
                 this.setUniform3fv(`u_Lights[${i}].diffuse`, lightObject.diffuse.flatten());
                 this.setUniform3fv(`u_Lights[${i}].specular`, lightObject.specular.flatten());
@@ -189,12 +190,11 @@ module.exports = class Shader {
      */
     setCameraUniforms(camera) {
 
-        let normalMatrix = camera.matrices.mvMatrix.inverse();
-        normalMatrix = normalMatrix.transpose();
+        const normalMatrix = camera.matrices.mvMatrix.inverse().transpose();
 
         this.setUniformMatrix4fv('u_ProjectionMatrix', new Float32Array(camera.matrices.perspectiveMatrix.flatten()));
         this.setUniformMatrix4fv('u_ModelViewMatrix', new Float32Array(camera.matrices.mvMatrix.flatten()));
-        this.setUniformMatrix4fv('u_NormalMatrix', new Float32Array(normalMatrix.flatten()));
+        this.setUniformMatrix3fv('u_NormalMatrix', new Float32Array(normalMatrix.flatten()));
         this.setUniform3fv(`u_CameraWorldPosition`, camera.getPosition());
     }
 
@@ -329,6 +329,23 @@ module.exports = class Shader {
 
         if (uniform) {
             this.gl.uniform4fv(uniform, value);
+
+            this.variableLog.push(`Setting ${name} to ${value}`);
+        } else {
+            this.variableLog.push(`Did not set ${name}`);
+        }
+    }
+
+    /**
+     * Shortcut method to set a uniformMatrix4fv.
+     * @param {*} name Uniform name.
+     * @param {*} value Value to set.
+     */
+     setUniformMatrix3fv(name, value) {
+        const uniform = this.gl.getUniformLocation(this.shaderProgram, name);
+
+        if (uniform) {
+            this.gl.uniformMatrix3fv(uniform, false, value);
 
             this.variableLog.push(`Setting ${name} to ${value}`);
         } else {

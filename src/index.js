@@ -156,11 +156,11 @@ function initSceneObjects(gl) {
 
     appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
 
-    const sunLightVectorObject = new SceneObject(gl);
-    sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
+    // const sunLightVectorObject = new SceneObject(gl);
+    // sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
 
-    sunLightObject.addSceneObject(sunLightVectorObject);
-    appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
+    // sunLightObject.addSceneObject(sunLightVectorObject);
+    // appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
 
     appRegistry.nodePaths.terrainPerimeter.addSceneObject(sunLightObject);
 
@@ -175,11 +175,11 @@ function initSceneObjects(gl) {
 
     appRegistry.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
 
-    const blueLightVectorObject = new SceneObject(gl);
-    blueLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light1.position, 20.0));
+    // const blueLightVectorObject = new SceneObject(gl);
+    // blueLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light1.position, 20.0));
 
-    blueLightObject.addSceneObject(blueLightVectorObject);
-    appRegistry.registerSceneObject('blueLightVector', blueLightVectorObject, 'line', 'static');
+    // blueLightObject.addSceneObject(blueLightVectorObject);
+    // appRegistry.registerSceneObject('blueLightVector', blueLightVectorObject, 'line', 'static');
 
     appRegistry.nodePaths.planes.addSceneObject(blueLightObject);
 
@@ -227,8 +227,6 @@ function startGlContext() {
 
     //
     appRegistry.camera = new Camera();
-    //appRegistry.camera.setPosition(-160, 440, -63);
-    //appRegistry.camera.setRotation(19, -128);
     appRegistry.camera.setPosition(-478, 986, -866);
     appRegistry.camera.setRotation(32, -140);
 
@@ -239,20 +237,20 @@ function startGlContext() {
     if (gl !== null) {
 
         const sunLight = new Light(gl, "0");
+        sunLight.setType(1);
         sunLight.setDirection(1.0, -1.0, 1.0);
         sunLight.setAmbient(0.3, 0.3, 0.1);
         sunLight.setDiffuse(0.7, 0.7, 0.7);
         sunLight.setSpecular(0.2, 0.2, 0.2);
-        sunLight.setRenderPosition(500, 500, 500);
-        sunLight.setType(1);
+        sunLight.setPosition(1, 1, 1);
         appRegistry.lights.light0 = sunLight;
 
         const blueLight = new Light(gl, "1");
-        blueLight.setDirection(1.0, -1.0, 1.0);
-        blueLight.setAmbient(0.0, 0.0, 0.1);
-        blueLight.setDiffuse(0.0, 0.0, 0.7);
-        blueLight.setSpecular(0.0, 0.0, 0.2);
         blueLight.setType(1);
+        blueLight.setPosition(1.0, -1.0, 1.0);
+        blueLight.setAmbient(0.0, 0.0, 0.0);
+        blueLight.setDiffuse(0.0, 0.0, 0.7);
+        blueLight.setSpecular(0.0, 0.0, 0.5);
         appRegistry.lights.light1 = blueLight;
 
         appRegistry.onAssetsLoaded = () => {
@@ -317,7 +315,7 @@ function startGlContext() {
         gl.depthFunc(gl.LEQUAL);
 
         //gl.enable(gl.CULL_FACE);
-        //gl.cullFace(gl.BACK);
+        gl.cullFace(gl.BACK);
         gl.frontFace(gl.CW);
     }
 }
@@ -399,11 +397,16 @@ function bindWebUI(gl) {
 
     document.querySelectorAll('input[class="sunPos"]').forEach((element) => {
         element.addEventListener('change', (event) => {
-            appRegistry.lights.light0.setPosition(
-                document.getElementById('sunPosX').value,
-                document.getElementById('sunPosY').value,
-                document.getElementById('sunPosZ').value,
-            );
+
+            const x = document.getElementById('sunPosX').value;
+            const y = document.getElementById('sunPosY').value;
+            const z = document.getElementById('sunPosZ').value;
+
+            if (appRegistry.lights.light0.type == 0) {
+                appRegistry.lights.light0.setDirection(x, y, z);
+            } else {
+                appRegistry.lights.light0.setPosition(x, y, z);
+            }
         });
     });
 
@@ -422,6 +425,10 @@ function bindWebUI(gl) {
         appRegistry.lights.light0.setType(document.getElementById('sunType').value);
 
         if (appRegistry.lights.light0.type == 0) {
+            document.getElementById('sunPosX').value = appRegistry.lights.light0.getDirection().x;
+            document.getElementById('sunPosY').value = appRegistry.lights.light0.getDirection().y;
+            document.getElementById('sunPosZ').value = appRegistry.lights.light0.getDirection().z;
+        } else {
             document.getElementById('sunPosX').value = appRegistry.lights.light0.getPosition().x;
             document.getElementById('sunPosY').value = appRegistry.lights.light0.getPosition().y;
             document.getElementById('sunPosZ').value = appRegistry.lights.light0.getPosition().z;

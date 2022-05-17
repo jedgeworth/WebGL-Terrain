@@ -18,6 +18,7 @@ module.exports = class Heightmap {
         this.highValue = 0;
         this.canvas = null;
 
+        this.heightmapImage = null;
     }
 
     /**
@@ -26,14 +27,13 @@ module.exports = class Heightmap {
      * @param {*} fileName path to filename.
      */
     initWithFile(fileName, callback) {
-        const heightmapImage = new Image();
-        this.canvas = document.createElement('canvas');
-        this.canvas.id = 'heightmap';
-        document.getElementById('debug').appendChild(this.canvas);
+        this.heightmapImage = new Image();
 
-        heightmapImage.onload = () => {
-            this.width = heightmapImage.width;
-            this.height = heightmapImage.height;
+        this.createCanvas();
+
+        this.heightmapImage.onload = () => {
+            this.width = this.heightmapImage.width;
+            this.height = this.heightmapImage.height;
 
             // Ensure dimensions are even.
             if (this.width % 2) {
@@ -47,7 +47,7 @@ module.exports = class Heightmap {
             this.canvas.width = this.width;
             this.canvas.height = this.height;
 
-            this.canvas.getContext('2d').drawImage(heightmapImage, 0, 0, this.width, this.height);
+            this.canvas.getContext('2d').drawImage(this.heightmapImage, 0, 0, this.width, this.height);
 
             for (let i = 0; i < this.width; i += 1) {
                 this.heightValues[i] = [];
@@ -63,11 +63,11 @@ module.exports = class Heightmap {
 
             // For very temporary debug purposes.
             //document.getElementById('debug').appendChild(this.canvas);
-            this.drawToCanvas();
+            //this.drawHeightValuesToCanvas();
 
             callback();
         };
-        heightmapImage.src = fileName;
+        this.heightmapImage.src = fileName;
     }
 
     /**
@@ -77,10 +77,9 @@ module.exports = class Heightmap {
      */
     initWithFaultLine(width, height, countSteps, callback) {
 
-        const heightmapImage = new Image();
-        this.canvas = document.createElement('canvas');
-        this.canvas.id = 'heightmap';
-        document.getElementById('debug').appendChild(this.canvas);
+        this.heightmapImage = new Image();
+
+        this.createCanvas();
 
         this.width = width;
         this.height = height;
@@ -99,7 +98,7 @@ module.exports = class Heightmap {
             }
         }
 
-        this.drawToCanvas();
+        this.drawHeightValuesToCanvas();
 
         for (let i = 0; i < countSteps; i += 1) {
             x1 = Math.random() * this.width;
@@ -129,7 +128,7 @@ module.exports = class Heightmap {
 
         this.calculateRange();
         this.postProcess();
-        this.drawToCanvas();
+        this.drawHeightValuesToCanvas();
 
         callback();
     }
@@ -171,13 +170,22 @@ module.exports = class Heightmap {
     /**
      *
      */
-    drawToCanvas() {
+    createCanvas() {
 
-        this.canvas.style.width = '200px';
-        this.canvas.style.height = '200px';
+        if (this.canvas === null) {
+            this.canvas = document.createElement('canvas');
+            this.canvas.id = 'heightmap';
+            this.canvas.style.width = '200px';
+            this.canvas.style.height = '200px';
 
-        //document.getElementById('debug').appendChild(this.canvas);
+            document.getElementById('debug').appendChild(this.canvas);
+        }
+    }
 
+    /**
+     *
+     */
+    drawHeightValuesToCanvas() {
 
         let ctx = this.canvas.getContext('2d');
 
