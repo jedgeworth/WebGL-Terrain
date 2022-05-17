@@ -14,25 +14,19 @@ const appRegistry = new AppRegistry();
 
 const KeyboardHandler = require('./lib/EdgeGL/KeyboardHandler');
 const Camera = require('./lib/EdgeGL/Camera');
-const Shader = require('./lib/EdgeGL/Shader');
 const SceneObject = require('./lib/EdgeGL/SceneObject');
 const Light = require('./lib/EdgeGL/Light');
-const Texture = require('./lib/EdgeGL/Texture');
 
 const OriginPrimitive = require('./lib/EdgeGL/Primitives/OriginPrimitive');
 const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive');
-const CubePrimitive = require('./lib/EdgeGL/Primitives/CubePrimitive');
 const LinePrimitive = require('./lib/EdgeGL/Primitives/LinePrimitive');
-const DomePrimitive = require('./lib/EdgeGL/Primitives/DomePrimitive');
 const SpherePrimitive = require('./lib/EdgeGL/Primitives/SpherePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
 const SkyDome = require('./lib/EdgeGL/SkyDome');
 
-const Sylvester = require('sylvester-es6/src/Sylvester');
 const Vector3 = require('./lib/EdgeGL/types/Vector3');
-const {distanceBetween} = require('./lib/EdgeGL/VectorMath');
 const NodePath = require('./lib/EdgeGL/NodePath');
 
 
@@ -250,7 +244,7 @@ function startGlContext() {
         sunLight.setDiffuse(0.7, 0.7, 0.7);
         sunLight.setSpecular(0.2, 0.2, 0.2);
         sunLight.setRenderPosition(500, 500, 500);
-        sunLight.setType(0);
+        sunLight.setType(1);
         appRegistry.lights.light0 = sunLight;
 
         const blueLight = new Light(gl, "1");
@@ -285,11 +279,6 @@ function startGlContext() {
         appRegistry.nodePaths.planes.setPoints([
             new Vector3(-250.0, 200.0, -150.0),
             new Vector3(300.0, 200.0, -150.0),
-
-            // new Vector3(0.0, 500.0, 2000.0),
-            // new Vector3(2000.0, 500.0, 2000.0),
-            // new Vector3(2000.0, 500.0, 0.0),
-            // new Vector3(0.0, 500.0, 0.0),
         ]);
         appRegistry.nodePaths.planes.setSpeed(300);
 
