@@ -122,7 +122,7 @@
         uniform mat4 u_NormalMatrix;
         uniform mat4 u_ModelViewMatrix;
         uniform mat4 u_ProjectionMatrix;
-
+        uniform vec3 u_CameraWorldPosition;
 
         varying vec3 v_VertexPosition;
         varying vec2 v_TextureCoord;
@@ -138,27 +138,27 @@
 
             vec4 v4VertexPosition = vec4(a_VertexPosition, 1.0);
 
-            v_VertexNormal = vec3( normalize(u_NormalMatrix * vec4(a_VertexNormal, 1.0)) );
-            v_EyeVector = normalize( vec3(u_ModelViewMatrix * v4VertexPosition) );
-            v_TextureCoord = a_TextureCoord;
+            v_VertexNormal = vec3( u_NormalMatrix * vec4(a_VertexNormal, 1.0) );
+            v_EyeVector = -vec3(a_VertexPosition);
             v_VertexPosition = a_VertexPosition;
 
             v_RawNormal = a_VertexNormal;
             v_FogDepth = (u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition).z;
 
             if (u_Lights[0].type == 0) {
-                v_LightPointPosition[0] = u_Lights[0].position;
+                v_LightPointPosition[0] = normalize(u_Lights[0].position);
             } else {
-                v_LightPointPosition[0] = -(u_Lights[0].position - a_VertexPosition);
+                v_LightPointPosition[0] = -(u_Lights[0].position - v_VertexPosition);
             }
 
             if (u_Lights[1].type == 0) {
-                v_LightPointPosition[1] = u_Lights[1].position;
+                v_LightPointPosition[1] = normalize(u_Lights[1].position);
             } else {
-                v_LightPointPosition[1] = -(u_Lights[1].position - a_VertexPosition);
+                v_LightPointPosition[1] = -(u_Lights[1].position - v_VertexPosition);
             }
 
-            //
+            v_TextureCoord = a_TextureCoord;
+
             gl_PointSize = 2.0;
             gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition;
         }
@@ -208,19 +208,16 @@
 
 
         const float attenuationConstant = 0.1;
-        const float attenuationLinear = 0.01;
-        const float attenuationExponent = 0.01;
+        const float attenuationLinear = 0.1;
+        const float attenuationExponent = 0.1;
 
         const vec4 u_MaterialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
         const vec4 u_MaterialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
         const vec4 u_MaterialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 
-        //
-        // Calculate the lighting.
-        // Uses vertex normals combined with a texture's normal map.
-        vec4 lighting(Light light, vec3 lightPosition) {
+        ////////////////////////////////////////////////////////////////////////
 
-            vec4 color;
+        vec4 lighting(Light light, vec3 lightPosition) {
 
             vec3 L = normalize( lightPosition );
             vec3 N = normalize( -v_VertexNormal );
@@ -243,11 +240,9 @@
             vec4 diffuse = vec4(0.0, 0.0, 0.0, 1.0);
             vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
 
-            color = ambient;
-
             float distance = length(lightPosition);
 
-            //if (distance < 900.0) {
+            if ((light.type == 2 && distance < 900.0) || light.type != 2) {
                 float lambertTerm = dot(N, L);
 
                 if (lambertTerm > 0.0) {
@@ -255,35 +250,36 @@
 
                     vec3 E = normalize( v_EyeVector );
                     vec3 R = normalize(reflect(L, N));
-                    float specularTerm = dot(R, E);
 
-                    if (specularTerm > 0.0) {
-                        specularTerm = pow(specularTerm, u_Shininess);
-                        specular = vec4(light.specular, 1.0) * u_MaterialSpecular * specularTerm;
-                    }
+                    float specularTerm = pow( max(dot(R, E), 0.0), u_Shininess);
+                    specular = vec4(light.specular, 1.0) * u_MaterialSpecular * specularTerm;
                 }
 
-                float attenuation = attenuationConstant +
+                if (light.type == 1 && distance > 9.0) {
+                    float attenuation = attenuationConstant +
                             attenuationLinear * distance +
                             attenuationExponent * distance * distance;
-            //}
+
+                    //diffuse /= attenuation;
+                    //specular /= attenuation;
+                }
+
+            }
 
 
             return ambient + diffuse + specular;
         }
 
+        ////////////////////////////////////////////////////////////////////////
 
-        //
-        // Calculate fog.
         vec4 fog(vec4 inFinalColor) {
 
             float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
             return mix( inFinalColor, u_FogColor, fogAmount );
         }
 
+        ////////////////////////////////////////////////////////////////////////
 
-        //
-        //
         void main(void) {
 
           vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
@@ -302,6 +298,10 @@
           //if (v_RawNormal.y < .85 && v_RawNormal.x < .85 && v_RawNormal.z < .85) {
           //    finalColor.r = 255.0;
           //}
+
+          //gl_FragColor.r = normalize(v_VertexNormal.x);
+          //gl_FragColor.g = normalize(v_VertexNormal.y);
+          //gl_FragColor.b = normalize(v_VertexNormal.z);
 
           gl_FragColor = finalColor;
         }

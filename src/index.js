@@ -24,6 +24,7 @@ const QuadPlanePrimitive = require('./lib/EdgeGL/Primitives/QuadPlanePrimitive')
 const CubePrimitive = require('./lib/EdgeGL/Primitives/CubePrimitive');
 const LinePrimitive = require('./lib/EdgeGL/Primitives/LinePrimitive');
 const DomePrimitive = require('./lib/EdgeGL/Primitives/DomePrimitive');
+const SpherePrimitive = require('./lib/EdgeGL/Primitives/SpherePrimitive');
 
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
@@ -109,6 +110,25 @@ function initSceneObjects(gl) {
     floorObject2.setPosition(200, 0, -200);
 
     appRegistry.registerSceneObject('floor2', floorObject2, 'base', 'static');
+
+    //
+    const sphereObject = new SceneObject(gl);
+
+    sphereObject.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+    sphereObject.setTexture(appRegistry.textures.rock);
+    sphereObject.setPosition(0, 100, -200);
+    sphereObject.roll = 90.0;
+
+    appRegistry.registerSceneObject('sphere', sphereObject, 'base', 'static');
+
+    //
+    const sphereObject2 = new SceneObject(gl);
+
+    sphereObject2.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+    sphereObject2.setTexture(appRegistry.textures['243']);
+    sphereObject2.setPosition(200, 100, -200);
+
+    appRegistry.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
 
     //
     const terrain = new Terrain();

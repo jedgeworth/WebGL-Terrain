@@ -187,14 +187,15 @@ module.exports = class Shader {
      * @param {*} perspectiveMatrix The perspective matrix.
      * @param {*} mvMatrix The model-view matrix.
      */
-    setMatrixUniforms(perspectiveMatrix, mvMatrix) {
+    setCameraUniforms(camera) {
 
-        let normalMatrix = mvMatrix.inverse();
+        let normalMatrix = camera.matrices.mvMatrix.inverse();
         normalMatrix = normalMatrix.transpose();
 
-        this.setUniformMatrix4fv('u_ProjectionMatrix', new Float32Array(perspectiveMatrix.flatten()));
-        this.setUniformMatrix4fv('u_ModelViewMatrix', new Float32Array(mvMatrix.flatten()));
+        this.setUniformMatrix4fv('u_ProjectionMatrix', new Float32Array(camera.matrices.perspectiveMatrix.flatten()));
+        this.setUniformMatrix4fv('u_ModelViewMatrix', new Float32Array(camera.matrices.mvMatrix.flatten()));
         this.setUniformMatrix4fv('u_NormalMatrix', new Float32Array(normalMatrix.flatten()));
+        this.setUniform3fv(`u_CameraWorldPosition`, camera.getPosition());
     }
 
     /**

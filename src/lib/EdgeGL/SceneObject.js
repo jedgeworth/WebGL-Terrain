@@ -280,15 +280,14 @@
 
         appRegistry.camera.matrices.mvTranslate(this.position.flatten());
         appRegistry.camera.matrices.mvRotate(this.yaw + this.flipYaw, [0, 1, 0]);
+        // appRegistry.camera.matrices.mvRotate(this.pitch, [1, 0, 0]);
+        // appRegistry.camera.matrices.mvRotate(this.roll, [0, 0, 1]);
 
         this.shaderProgram.use();
         this.shaderProgram.setLightUniforms(appRegistry.lights, appRegistry.lightSettings, this.useLighting);
         this.shaderProgram.setFogUniforms(appRegistry.fogSettings, this.useFog);
 
-        this.shaderProgram.setMatrixUniforms(
-            appRegistry.camera.matrices.perspectiveMatrix,
-            appRegistry.camera.matrices.mvMatrix
-        );
+        this.shaderProgram.setCameraUniforms(appRegistry.camera);
 
         //this.checkBuffers(this.shaderProgram);
 
