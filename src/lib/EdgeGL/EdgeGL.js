@@ -9,7 +9,7 @@ const Shader = require("./Shader");
  */
 
  const Texture = require('./Texture');
-module.exports = class AppRegistry{
+module.exports = class EdgeGL{
 
     constructor() {
         this.gl = null;
@@ -60,38 +60,148 @@ module.exports = class AppRegistry{
             texturesLoaded: false
         };
 
-        this.onAssetsLoaded = null;
+        this.prepareAssets = null;
+        this.prepareObjects = null;
 
         this.options = {
             isRenderModeLines: false
         };
     }
 
+
     /**
-     * Sets the gl context from the canvas.
+     * Binds EdgeGL to an element by id.
+     * @param {*} canvasId Id of the target canvas element.
+     * @returns
      */
-    setGlContext(gl) {
-        this.gl = gl;
+    initWithCanvas(canvasId) {
+        const canvas = document.getElementById(canvasId);
+
+        if (canvas === undefined || canvas === null) {
+            throw new Error("Could not find the canvas.");
+            return false;
+        }
+
+        this.gl = null;
+
+        try {
+            this.gl = canvas.getContext("webgl");
+        } catch(e) {
+            console.error(e);
+            return false;
+        }
+
+        if (!this.gl) {
+            console.error("Unable to initialize WebGL.");
+            return false;
+        }
+
+        //this.gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
+        this.gl.clearColor(0.8, 0.9, 1.0, 1.0);
+        this.gl.clearDepth(1.0);
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.depthFunc(this.gl.LEQUAL);
+
+        //this.gl.enable(gl.CULL_FACE);
+        this.gl.cullFace(this.gl.BACK);
+        this.gl.frontFace(this.gl.CW);
+
+        return true;
     }
+
+
+    /**
+     * Called to begin loading assets.
+     *
+     */
+    start() {
+
+        if (this.prepareAssets === null || this.prepareObjects === null) {
+            throw "prepareAssets and prepareObjects callbacks must be set prior to calling start().";
+        }
+
+        this.prepareAssets();
+    }
+
+
+
 
     /**
      * Called every time an asset is loaded. If all assets are loaded we then
-     * call the assetsLoadedCallback.
+     * call the assetLoadedCallback.
      */
-    assetsLoaded() {
+    assetLoaded() {
 
-        if (!this.onAssetsLoaded) {
+        if (!this.didLoadAssets) {
             throw "appRegistry: Assets Loaded Callback must be set before loading assets.";
         }
 
         if (this.assetFlags.modelsLoaded && this.assetFlags.texturesLoaded) {
 
             try {
-                this.onAssetsLoaded();
+                this.didLoadAssets();
             } catch (e) {
                 console.error(e);
             }
         }
+    }
+
+
+    /**
+     * Once all assets are loaded (via prepareAssets), this is called to prepare
+     * stage 2 resources.
+     */
+    didLoadAssets() {
+
+        this.createGlTextures();
+        this.prepareObjects(this.gl);
+
+        this,this.canStartDrawing();
+    }
+
+
+    /**
+     *
+     */
+    canStartDrawing() {
+        requestAnimationFrame(() => this.tick());
+    }
+
+
+    /**
+     *
+     * @param {*} camera
+     */
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
+    /**
+     *
+     * @param {*} keyboardHandler
+     */
+    setKeyboardHandler(keyboardHandler) {
+        this.keyboardHandler = keyboardHandler;
+    }
+
+    /**
+     * Sets a light.
+     *
+     *
+     * @param {int} index Light index to set to (used in shaders as u_Light0 etc)
+     * @param {*} light Light object.
+     */
+    setLight(index, light) {
+        this.lights[`light${index}`] = light;
+    }
+
+    /**
+     * Sets a nodePath with name.
+     * @param {*} name Name of node path.
+     * @param {*} nodePath NodePath.
+     */
+    setNodePath(name, nodePath) {
+        this.nodePaths[name] = nodePath;
     }
 
     /**
@@ -144,7 +254,7 @@ module.exports = class AppRegistry{
                 countTexturesLoaded += 1;
                 self.assetFlags.texturesLoaded = (countTexturesLoaded == totalEntries);
 
-                self.assetsLoaded();
+                self.assetLoaded();
             }
             this.textureImages[textureName].src = filePath;
         }
@@ -159,27 +269,7 @@ module.exports = class AppRegistry{
         for (const [imageName, textureImage] of Object.entries(this.textureImages)) {
             this.registerTexture(imageName);
         }
-
-        // for (const [textureKey, textureImage] of Object.entries(this.textureImages)) {
-        //     const glTexture = this.gl.createTexture();
-
-        //     this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
-        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
-        //     this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
-
-        //     this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
-        //     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, textureImage);
-        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        //     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
-        //     this.gl.generateMipmap(this.gl.TEXTURE_2D);
-        //     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
-        //     this.glTextures[textureKey] = glTexture;
-        // }
     }
-
-
 
 
     /**
@@ -236,6 +326,28 @@ module.exports = class AppRegistry{
     }
 
 
+
+    /**
+     * Handles resizing the canvas and viewport if the window size changes.
+     * @returns
+     */
+    handleWindowResize() {
+
+        const displayWidth  = this.gl.canvas.clientWidth;
+        const displayHeight = this.gl.canvas.clientHeight;
+
+        const needResize = this.gl.canvas.width  !== displayWidth ||
+        this.gl.canvas.height !== displayHeight;
+
+        if (needResize) {
+            this.gl.canvas.width  = displayWidth;
+            this.gl.canvas.height = displayHeight;
+        }
+
+        return needResize;
+    }
+
+
     /**
      * Renders the specified object render queue.
      * @param {*} renderContext ortho, static, or timed.
@@ -263,5 +375,47 @@ module.exports = class AppRegistry{
         }
 
     }
+
+
+    /**
+     * Called once per frame to run the next frame.
+     */
+    tick() {
+
+        this.keyboardHandler.handleKeys();
+        this.handleWindowResize();
+
+        if (this.sky) {
+            this.sky.update();
+        }
+
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+        this.camera.update();
+        this.camera.debug('cameraDebug');
+
+        this.render('nonDepth');
+        this.render('static');
+
+        // Handle any animated meshes.
+        const currentTime = (new Date).getTime();
+        if (this.lastUpdateTime) {
+            const delta = currentTime - this.lastUpdateTime;
+
+            if (this.lights.light0.type != 0) {
+                this.nodePaths.terrainPerimeter.tick(delta);
+            }
+
+            if (this.lights.light1.type != 0) {
+                this.nodePaths.planes.tick(delta);
+            }
+        }
+
+        this.lastUpdateTime = currentTime;
+
+        requestAnimationFrame(() => this.tick());
+    }
+
 
 }

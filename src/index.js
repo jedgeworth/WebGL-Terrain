@@ -9,8 +9,8 @@
 require('normalize.css/normalize.css');
 require('./styles/index.scss');
 
-const AppRegistry = require('./lib/EdgeGL/AppRegistry');
-const appRegistry = new AppRegistry();
+const EdgeGL = require('./lib/EdgeGL/EdgeGL');
+const edgeGl = new EdgeGL();
 
 const KeyboardHandler = require('./lib/EdgeGL/KeyboardHandler');
 const Camera = require('./lib/EdgeGL/Camera');
@@ -30,336 +30,273 @@ const Vector3 = require('./lib/EdgeGL/types/Vector3');
 const NodePath = require('./lib/EdgeGL/NodePath');
 
 
+const gl = null;
+
 /**
  * Once DOM is ready, begin.
  */
 document.addEventListener("DOMContentLoaded", () => {
 
-    startGlContext();
+    const edgeGl = new EdgeGL();
+    if (edgeGl.initWithCanvas('glcanvas')) {
 
-});
+        //======================================================================
+        // Stage 1 assets
+        //======================================================================
 
+        edgeGl.prepareAssets = (gl) => {
 
-/**
- * Load any expected model resources (.obj)
- */
-function loadModels() {
+            edgeGl.registerTextureImages({
+                'blank' : require('./assets/img/blank.png'),
+                'grass' : require('./assets/img/grass.jpg'),
 
-    // Load Heightmap
-    const heightmap = new Heightmap();
+                'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
+                'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
 
-    // heightmap.initWithFaultLine(256, 256, 0, () => {
-    //     appRegistry.heightmaps.main = heightmap;
-    //     appRegistry.assetFlags.modelsLoaded = true;
+                'rock' : require('./assets/img/rocks.png'),
+                'rock_n' : require('./assets/img/rocks_N.png'),
 
-    //     appRegistry.assetsLoaded();
-    // });
+                '243' : require('./assets/img/243.png'),
+                '243_n' : require('./assets/img/243_n.png'),
 
-    heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
-        appRegistry.heightmaps.main = heightmap;
-        appRegistry.assetFlags.modelsLoaded = true;
+                'floor' : require('./assets/img/floor.png'),
+                'lightbulb' : require('./assets/img/lightbulb.jpg'),
+                'sky' : require('./assets/img/sky.png'),
+                'waterDeep' : require('./assets/img/water_deep.png'),
+            });
 
-        appRegistry.assetsLoaded();
-    });
-}
+            edgeGl.registerShaders({
+                line: "line",
+                base: "base",
+                billboard: "billboard",
+            });
 
- /**
-  * Initialise any vertex and index buffers.
-  *
-  * @param {*} gl gl context object.
-  */
-function initSceneObjects(gl) {
+            // Load Heightmap
+            const heightmap = new Heightmap();
 
-    const originObject = new SceneObject(gl);
-    originObject.setPrimitive(new OriginPrimitive(gl));
-    appRegistry.registerSceneObject('worldOrigin', originObject, 'line', 'static');
+            // heightmap.initWithFaultLine(256, 256, 0, () => {
+            //     edgeGl.heightmaps.main = heightmap;
+            //     edgeGl.assetFlags.modelsLoaded = true;
 
-    //
+            //     edgeGl.assetsLoaded();
+            // });
 
-    const skyDome = new SkyDome(
-        gl,
-        appRegistry.textures.sky,
-        appRegistry.textures.waterDeep
-    );
+            heightmap.initWithFile(require('./assets/terrain/Heightmap.png'), () => {
+                edgeGl.heightmaps.main = heightmap;
+                edgeGl.assetFlags.modelsLoaded = true;
 
-    skyDome.registerSceneObjects(appRegistry, 'domeSky', 'domeFloor');
-    skyDome.setCamera(appRegistry.camera);
-    appRegistry.sky = skyDome;
+                edgeGl.assetLoaded();
+            });
 
-
-    //
-    const floorObject = new SceneObject(gl);
-
-    floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-    floorObject.setTexture(appRegistry.textures.rock);
-    floorObject.setPosition(0, 0, -200);
-
-    appRegistry.registerSceneObject('floor', floorObject, 'base', 'static');
-
-    //
-    const floorObject2 = new SceneObject(gl);
-
-    floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-    floorObject2.setTexture(appRegistry.textures['243']);
-    floorObject2.setPosition(200, 0, -200);
-
-    appRegistry.registerSceneObject('floor2', floorObject2, 'base', 'static');
-
-    //
-    const sphereObject = new SceneObject(gl);
-
-    sphereObject.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
-    sphereObject.setTexture(appRegistry.textures.rock);
-    sphereObject.setPosition(0, 100, -200);
-    sphereObject.roll = 90.0;
-
-    appRegistry.registerSceneObject('sphere', sphereObject, 'base', 'static');
-
-    //
-    const sphereObject2 = new SceneObject(gl);
-
-    sphereObject2.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
-    sphereObject2.setTexture(appRegistry.textures['243']);
-    sphereObject2.setPosition(200, 100, -200);
-
-    appRegistry.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
-
-    //
-    const terrain = new Terrain();
-    terrain.setStretch(8);
-    terrain.initWithHeightmap(appRegistry.heightmaps.main);
-
-    const terrainObject = new SceneObject(gl);
-    terrain.populateSceneObject(terrainObject);
-
-    terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
-    terrainObject.setTexture(appRegistry.textures.grassPurpleFlowers);
-
-    appRegistry.registerSceneObject('terrain', terrainObject, 'base', 'static');
-
-    //
-    const terrainNormalDebugObject = new SceneObject(gl);
-    terrain.populateNormalDebugSceneObject(terrainNormalDebugObject);
-
-    terrainNormalDebugObject.setRenderMode(gl.LINES);
-    terrainNormalDebugObject.setEnabled(false);
-    appRegistry.registerSceneObject('terrainNormalDebug', terrainNormalDebugObject, 'line', 'static');
-
-
-    //
-    const sunLightObject = new SceneObject(gl);
-    sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
-    sunLightObject.setTexture(appRegistry.textures.lightbulb);
-    sunLightObject.useFog = false;
-    sunLightObject.useLighting = false;
-    appRegistry.lights.light0.setSceneObject(sunLightObject);
-
-    appRegistry.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
-
-    // const sunLightVectorObject = new SceneObject(gl);
-    // sunLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light0.position, 20.0));
-
-    // sunLightObject.addSceneObject(sunLightVectorObject);
-    // appRegistry.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
-
-    appRegistry.nodePaths.terrainPerimeter.addSceneObject(sunLightObject);
-
-
-    //
-    const blueLightObject = new SceneObject(gl);
-    blueLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
-    blueLightObject.setTexture(appRegistry.textures.lightbulb);
-    blueLightObject.useFog = false;
-    blueLightObject.useLighting = false;
-    appRegistry.lights.light1.setSceneObject(blueLightObject);
-
-    appRegistry.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
-
-    // const blueLightVectorObject = new SceneObject(gl);
-    // blueLightVectorObject.setPrimitive(new LinePrimitive(gl, appRegistry.lights.light1.position, 20.0));
-
-    // blueLightObject.addSceneObject(blueLightVectorObject);
-    // appRegistry.registerSceneObject('blueLightVector', blueLightVectorObject, 'line', 'static');
-
-    appRegistry.nodePaths.planes.addSceneObject(blueLightObject);
-
-
-
-
-
-    // Example of a more complicated object (TODO: port the object loader across)
-    // var tankMesh = new Mesh.Init(gl);
-    // tankMesh.setVertices(app.models.tank.vertices);
-    // tankMesh.setNormals(app.models.tank.vertexNormals);
-    // tankMesh.setTexCoords(app.models.tank.textures);
-    // tankMesh.setIndices(app.models.tank.indices);
-    // tankMesh.setTexture(app.glTextures.blank);
-    // tankMesh.setFlipYaw();
-    // app.meshes.tank = tankMesh;
-}
-
-
-/**
- * Called once assets are loaded, we have a canvas, and we have the gl context.
- * Converts assets to GL assets, loads shaders, objects, etc.
- */
-function startGlContext() {
-
-    const canvas = document.getElementById("glcanvas");
-
-    if (canvas === undefined || canvas === null) {
-        throw new Error("Could not find the canvas.");
-    }
-
-    let gl = null;
-
-    try {
-        gl = canvas.getContext("webgl");
-    } catch(e) {
-        console.error(e);
-    }
-
-    if (!gl) {
-        console.error("Unable to initialize WebGL.");
-    }
-
-    appRegistry.setGlContext(gl);
-
-    //
-    appRegistry.camera = new Camera();
-    appRegistry.camera.setPosition(-478, 986, -866);
-    appRegistry.camera.setRotation(32, -140);
-
-    //
-    appRegistry.keyboardHandler = new KeyboardHandler(window, document);
-    appRegistry.keyboardHandler.setCamera(appRegistry.camera);
-
-    if (gl !== null) {
-
-        const sunLight = new Light(gl, "0");
-        sunLight.setType(1);
-        sunLight.setDirection(1.0, -1.0, 1.0);
-        sunLight.setAmbient(0.3, 0.3, 0.1);
-        sunLight.setDiffuse(0.7, 0.7, 0.7);
-        sunLight.setSpecular(0.2, 0.2, 0.2);
-        sunLight.setPosition(1, 1, 1);
-        appRegistry.lights.light0 = sunLight;
-
-        const blueLight = new Light(gl, "1");
-        blueLight.setType(1);
-        blueLight.setPosition(1.0, -1.0, 1.0);
-        blueLight.setAmbient(0.0, 0.0, 0.0);
-        blueLight.setDiffuse(0.0, 0.0, 0.7);
-        blueLight.setSpecular(0.0, 0.0, 0.5);
-        appRegistry.lights.light1 = blueLight;
-
-        appRegistry.onAssetsLoaded = () => {
-            appRegistry.createGlTextures();
-
-            initSceneObjects(gl);
-            bindWebUI(gl);
-
-            requestAnimationFrame(() => drawScene(gl));
         };
 
+        //======================================================================
+        // Stage 2 - Load objects.
+        //======================================================================
 
-        appRegistry.nodePaths.terrainPerimeter = new NodePath();
-        appRegistry.nodePaths.terrainPerimeter.setPoints([
-            new Vector3(0.0, 500.0, 0.0),
-            new Vector3(0.0, 500.0, 2000.0),
-            new Vector3(2000.0, 500.0, 2000.0),
-            new Vector3(2000.0, 500.0, 0.0)
-        ]);
-        appRegistry.nodePaths.terrainPerimeter.setSpeed(500);
+        edgeGl.prepareObjects = (gl) => {
+
+            const camera = new Camera();
+            camera.setPosition(-478, 986, -866);
+            camera.setRotation(32, -140);
+            edgeGl.setCamera(camera);
+
+            //
+            const keyboardHandler = new KeyboardHandler(window, document);
+            keyboardHandler.setCamera(camera);
+            edgeGl.setKeyboardHandler(keyboardHandler);
+
+            const sunLight = new Light(gl, "0");
+            sunLight.setType(1);
+            sunLight.setDirection(1.0, -1.0, 1.0);
+            sunLight.setAmbient(0.3, 0.3, 0.1);
+            sunLight.setDiffuse(0.7, 0.7, 0.7);
+            sunLight.setSpecular(0.2, 0.2, 0.2);
+            sunLight.setPosition(1, 1, 1);
+            edgeGl.setLight('0', sunLight);
+
+            const blueLight = new Light(gl, "1");
+            blueLight.setType(1);
+            blueLight.setPosition(1.0, -1.0, 1.0);
+            blueLight.setAmbient(0.0, 0.0, 0.0);
+            blueLight.setDiffuse(0.0, 0.0, 0.7);
+            blueLight.setSpecular(0.0, 0.0, 0.5);
+            edgeGl.setLight('1', blueLight);
+
+            const terrainPerimeter = new NodePath();
+            terrainPerimeter.setPoints([
+                new Vector3(0.0, 500.0, 0.0),
+                new Vector3(0.0, 500.0, 2000.0),
+                new Vector3(2000.0, 500.0, 2000.0),
+                new Vector3(2000.0, 500.0, 0.0)
+            ]);
+            terrainPerimeter.setSpeed(500);
+
+            edgeGl.setNodePath('terrainPerimeter', terrainPerimeter);
 
 
-        appRegistry.nodePaths.planes = new NodePath();
-        appRegistry.nodePaths.planes.setPoints([
-            new Vector3(-250.0, 200.0, -150.0),
-            new Vector3(300.0, 200.0, -150.0),
-        ]);
-        appRegistry.nodePaths.planes.setSpeed(300);
+            const planes = new NodePath();
+            planes.setPoints([
+                new Vector3(-250.0, 200.0, -150.0),
+                new Vector3(300.0, 200.0, -150.0),
+            ]);
+            planes.setSpeed(300);
+            edgeGl.setNodePath('planes', planes);
 
 
-        appRegistry.registerTextureImages({
-            'blank' : require('./assets/img/blank.png'),
-            'grass' : require('./assets/img/grass.jpg'),
+            //
+            // Scene objects
+            //
+            const originObject = new SceneObject(gl);
+            originObject.setPrimitive(new OriginPrimitive(gl));
+            edgeGl.registerSceneObject('worldOrigin', originObject, 'line', 'static');
 
-            'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
-            'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
+            //
 
-            'rock' : require('./assets/img/rocks.png'),
-            'rock_n' : require('./assets/img/rocks_N.png'),
+            const skyDome = new SkyDome(
+                gl,
+                edgeGl.textures.sky,
+                edgeGl.textures.waterDeep
+            );
 
-            '243' : require('./assets/img/243.png'),
-            '243_n' : require('./assets/img/243_n.png'),
+            skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor');
+            skyDome.setCamera(camera);
+            edgeGl.sky = skyDome;
 
-            'floor' : require('./assets/img/floor.png'),
-            'lightbulb' : require('./assets/img/lightbulb.jpg'),
-            'sky' : require('./assets/img/sky.png'),
-            'waterDeep' : require('./assets/img/water_deep.png'),
-        });
 
-        appRegistry.registerShaders({
-            line: "line",
-            base: "base",
-            billboard: "billboard",
-        });
+            //
+            const floorObject = new SceneObject(gl);
 
-        loadModels();
+            floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+            floorObject.setTexture(edgeGl.textures.rock);
+            floorObject.setPosition(0, 0, -200);
 
-        //gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
-        gl.clearColor(0.8, 0.9, 1.0, 1.0);
-        gl.clearDepth(1.0);
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.LEQUAL);
+            edgeGl.registerSceneObject('floor', floorObject, 'base', 'static');
 
-        //gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
-        gl.frontFace(gl.CW);
+            //
+            const floorObject2 = new SceneObject(gl);
+
+            floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+            floorObject2.setTexture(edgeGl.textures['243']);
+            floorObject2.setPosition(200, 0, -200);
+
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static');
+
+            //
+            const sphereObject = new SceneObject(gl);
+
+            sphereObject.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+            sphereObject.setTexture(edgeGl.textures.rock);
+            sphereObject.setPosition(0, 100, -200);
+            sphereObject.roll = 90.0;
+
+            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static');
+
+            //
+            const sphereObject2 = new SceneObject(gl);
+
+            sphereObject2.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+            sphereObject2.setTexture(edgeGl.textures['243']);
+            sphereObject2.setPosition(200, 100, -200);
+
+            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
+
+            //
+            const terrain = new Terrain();
+            terrain.setStretch(8);
+            terrain.initWithHeightmap(edgeGl.heightmaps.main);
+
+            const terrainObject = new SceneObject(gl);
+            terrain.populateSceneObject(terrainObject);
+
+            terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
+            terrainObject.setTexture(edgeGl.textures.grassPurpleFlowers);
+
+            edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static');
+
+            //
+            const terrainNormalDebugObject = new SceneObject(gl);
+            terrain.populateNormalDebugSceneObject(terrainNormalDebugObject);
+
+            terrainNormalDebugObject.setRenderMode(gl.LINES);
+            terrainNormalDebugObject.setEnabled(false);
+            edgeGl.registerSceneObject('terrainNormalDebug', terrainNormalDebugObject, 'line', 'static');
+
+
+            //
+            const sunLightObject = new SceneObject(gl);
+            sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
+            sunLightObject.setTexture(edgeGl.textures.lightbulb);
+            sunLightObject.useFog = false;
+            sunLightObject.useLighting = false;
+            edgeGl.lights.light0.setSceneObject(sunLightObject);
+
+            edgeGl.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
+
+            // const sunLightVectorObject = new SceneObject(gl);
+            // sunLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light0.position, 20.0));
+
+            // sunLightObject.addSceneObject(sunLightVectorObject);
+            // edgeGl.registerSceneObject('sunLightVector', sunLightVectorObject, 'line', 'static');
+
+            edgeGl.nodePaths.terrainPerimeter.addSceneObject(sunLightObject);
+
+
+            //
+            const blueLightObject = new SceneObject(gl);
+            blueLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
+            blueLightObject.setTexture(edgeGl.textures.lightbulb);
+            blueLightObject.useFog = false;
+            blueLightObject.useLighting = false;
+            edgeGl.lights.light1.setSceneObject(blueLightObject);
+
+            edgeGl.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
+
+            // const blueLightVectorObject = new SceneObject(gl);
+            // blueLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light1.position, 20.0));
+
+            // blueLightObject.addSceneObject(blueLightVectorObject);
+            // edgeGl.registerSceneObject('blueLightVector', blueLightVectorObject, 'line', 'static');
+
+            edgeGl.nodePaths.planes.addSceneObject(blueLightObject);
+
+            // Example of a more complicated object (TODO: port the object loader across)
+            // var tankMesh = new Mesh.Init(gl);
+            // tankMesh.setVertices(app.models.tank.vertices);
+            // tankMesh.setNormals(app.models.tank.vertexNormals);
+            // tankMesh.setTexCoords(app.models.tank.textures);
+            // tankMesh.setIndices(app.models.tank.indices);
+            // tankMesh.setTexture(app.glTextures.blank);
+            // tankMesh.setFlipYaw();
+            // app.meshes.tank = tankMesh;
+
+            bindWebUI(gl, edgeGl);
+
+        };
+
+        edgeGl.start();
     }
-}
+});
 
-
-/**
- * Allow a window rezize to resize the canvas.
- *
- * (src: https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)
- */
- function handleWindowResize(canvas) {
-
-    const displayWidth  = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-
-    const needResize = canvas.width  !== displayWidth ||
-                        canvas.height !== displayHeight;
-
-    if (needResize) {
-        canvas.width  = displayWidth;
-        canvas.height = displayHeight;
-    }
-
-    return needResize;
-}
 
 
 /**
  * Binds any web UI inputs, controls etc.
  */
-function bindWebUI(gl) {
+function bindWebUI(gl, edgeGl) {
     document.querySelectorAll('input[name="renderModeOverride"]').forEach((element) => {
         element.addEventListener('change', (event) => {
 
             switch (parseInt(event.target.value)) {
-                case 0: appRegistry.options.renderModeOverride = null; break;
-                case 1: appRegistry.options.renderModeOverride = gl.LINES; break;
-                case 2: appRegistry.options.renderModeOverride = gl.POINTS; break;
+                case 0: edgeGl.options.renderModeOverride = null; break;
+                case 1: edgeGl.options.renderModeOverride = gl.LINES; break;
+                case 2: edgeGl.options.renderModeOverride = gl.POINTS; break;
             }
 
-            Object.values(appRegistry.sceneObjects).forEach((sceneObject) => {
+            Object.values(edgeGl.sceneObjects).forEach((sceneObject) => {
 
-                if (appRegistry.options.renderModeOverride !== null) {
-                    sceneObject.setRenderModeOverride(appRegistry.options.renderModeOverride);
+                if (edgeGl.options.renderModeOverride !== null) {
+                    sceneObject.setRenderModeOverride(edgeGl.options.renderModeOverride);
                 } else {
                     sceneObject.disableRenderModeOverride();
                 }
@@ -370,14 +307,14 @@ function bindWebUI(gl) {
 
 
     document.querySelector('input[name="renderNormals"]').addEventListener('change', (event) => {
-        appRegistry.options.renderNormals = (event.target.checked);
-        appRegistry.sceneObjects.terrainNormalDebug.setEnabled(appRegistry.options.renderNormals);
+        edgeGl.options.renderNormals = (event.target.checked);
+        edgeGl.sceneObjects.terrainNormalDebug.setEnabled(edgeGl.options.renderNormals);
     });
 
 
     document.querySelectorAll('input[class="diffuse"]').forEach((element) => {
         element.addEventListener('change', (event) => {
-            appRegistry.lights.light0.setDiffuse(
+            edgeGl.lights.light0.setDiffuse(
                 document.getElementById('diffuseR').value,
                 document.getElementById('diffuseG').value,
                 document.getElementById('diffuseB').value,
@@ -387,7 +324,7 @@ function bindWebUI(gl) {
 
     document.querySelectorAll('input[class="specular"]').forEach((element) => {
         element.addEventListener('change', (event) => {
-            appRegistry.lights.light0.setSpecular(
+            edgeGl.lights.light0.setSpecular(
                 document.getElementById('specularR').value,
                 document.getElementById('specularG').value,
                 document.getElementById('specularB').value,
@@ -402,45 +339,45 @@ function bindWebUI(gl) {
             const y = document.getElementById('sunPosY').value;
             const z = document.getElementById('sunPosZ').value;
 
-            if (appRegistry.lights.light0.type == 0) {
-                appRegistry.lights.light0.setDirection(x, y, z);
+            if (edgeGl.lights.light0.type == 0) {
+                edgeGl.lights.light0.setDirection(x, y, z);
             } else {
-                appRegistry.lights.light0.setPosition(x, y, z);
+                edgeGl.lights.light0.setPosition(x, y, z);
             }
         });
     });
 
     document.querySelectorAll('input[class="fog"]').forEach((element) => {
         element.addEventListener('change', (event) => {
-            appRegistry.fogSettings.near = document.getElementById('fogNear').value;
-            appRegistry.fogSettings.far = document.getElementById('fogFar').value;
+            edgeGl.fogSettings.near = document.getElementById('fogNear').value;
+            edgeGl.fogSettings.far = document.getElementById('fogFar').value;
         });
     });
 
     document.querySelector('input[class="shininess"]').addEventListener('change', (event) => {
-        appRegistry.lightSettings.shininess = document.getElementById('shininess').value;
+        edgeGl.lightSettings.shininess = document.getElementById('shininess').value;
     });
 
     document.querySelector('select[class="sunType"]').addEventListener('change', (event) => {
-        appRegistry.lights.light0.setType(document.getElementById('sunType').value);
+        edgeGl.lights.light0.setType(document.getElementById('sunType').value);
 
-        if (appRegistry.lights.light0.type == 0) {
-            document.getElementById('sunPosX').value = appRegistry.lights.light0.getDirection().x;
-            document.getElementById('sunPosY').value = appRegistry.lights.light0.getDirection().y;
-            document.getElementById('sunPosZ').value = appRegistry.lights.light0.getDirection().z;
+        if (edgeGl.lights.light0.type == 0) {
+            document.getElementById('sunPosX').value = edgeGl.lights.light0.getDirection().x;
+            document.getElementById('sunPosY').value = edgeGl.lights.light0.getDirection().y;
+            document.getElementById('sunPosZ').value = edgeGl.lights.light0.getDirection().z;
         } else {
-            document.getElementById('sunPosX').value = appRegistry.lights.light0.getPosition().x;
-            document.getElementById('sunPosY').value = appRegistry.lights.light0.getPosition().y;
-            document.getElementById('sunPosZ').value = appRegistry.lights.light0.getPosition().z;
+            document.getElementById('sunPosX').value = edgeGl.lights.light0.getPosition().x;
+            document.getElementById('sunPosY').value = edgeGl.lights.light0.getPosition().y;
+            document.getElementById('sunPosZ').value = edgeGl.lights.light0.getPosition().z;
         }
     });
 
     document.querySelector('select[class="normalMapping"]').addEventListener('change', (event) => {
-        appRegistry.lightSettings.useNormalMapping = parseInt(document.getElementById('normalMapping').value);
+        edgeGl.lightSettings.useNormalMapping = parseInt(document.getElementById('normalMapping').value);
     });
 
     document.querySelector('select[class="correctD3d"]').addEventListener('change', (event) => {
-        appRegistry.lightSettings.correctD3d = parseInt(document.getElementById('correctD3d').value);
+        edgeGl.lightSettings.correctD3d = parseInt(document.getElementById('correctD3d').value);
     });
 
 
@@ -452,55 +389,13 @@ function bindWebUI(gl) {
         const h = document.getElementById('newHeight').value;
         const steps = document.getElementById('newSteps').value;
 
-        appRegistry.heightmaps.main.initWithFaultLine(w, h, steps, () => {
+        edgeGl.heightmaps.main.initWithFaultLine(w, h, steps, () => {
             const terrain = new Terrain();
             terrain.setStretch(8);
-            terrain.initWithHeightmap(appRegistry.heightmaps.main);
-            terrain.populateSceneObject(appRegistry.sceneObjects.terrain);
-            terrain.populateNormalDebugSceneObject(appRegistry.sceneObjects.terrainNormalDebug);
+            terrain.initWithHeightmap(edgeGl.heightmaps.main);
+            terrain.populateSceneObject(edgeGl.sceneObjects.terrain);
+            terrain.populateNormalDebugSceneObject(edgeGl.sceneObjects.terrainNormalDebug);
         });
 
     };
-}
-
-/**
- * drawScene
- *
- * Renders the scene.
- */
-function drawScene(gl) {
-
-    appRegistry.keyboardHandler.handleKeys();
-    handleWindowResize(gl.canvas);
-
-    if (appRegistry.sky) {
-        appRegistry.sky.update();
-    }
-
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    appRegistry.camera.update();
-    appRegistry.camera.debug('cameraDebug');
-
-    appRegistry.render('nonDepth');
-    appRegistry.render('static');
-
-    // Handle any animated meshes.
-    const currentTime = (new Date).getTime();
-    if (appRegistry.lastUpdateTime) {
-        const delta = currentTime - appRegistry.lastUpdateTime;
-
-        if (appRegistry.lights.light0.type != 0) {
-            appRegistry.nodePaths.terrainPerimeter.tick(delta);
-        }
-
-        if (appRegistry.lights.light1.type != 0) {
-            appRegistry.nodePaths.planes.tick(delta);
-        }
-    }
-
-    appRegistry.lastUpdateTime = currentTime;
-
-    requestAnimationFrame(() => drawScene(gl));
 }
