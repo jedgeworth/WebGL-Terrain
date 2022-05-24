@@ -51,6 +51,7 @@
         this.glTexture = null;
         this.glTextureNormalMap = null;
         this.texture0 = null;
+        this.flipTexture = false;
 
         this.position = new Vector3(0.0, 0.0, 0.0);
         this.pitch = 0.0;

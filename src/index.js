@@ -26,6 +26,8 @@ const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
 const SkyDome = require('./lib/EdgeGL/SkyDome');
 
+const FBOTexture = require('./lib/EdgeGL/FBOTexture');
+
 const Vector3 = require('./lib/EdgeGL/types/Vector3');
 const NodePath = require('./lib/EdgeGL/NodePath');
 
@@ -49,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.registerTextureImages({
                 'blank' : require('./assets/img/blank.png'),
                 'grass' : require('./assets/img/grass.jpg'),
+                'orientation' : require('./assets/img/orientation.png'),
 
                 'grassPurpleFlowers' : require('./assets/img/GrassPurpleFlowers.png'),
                 'grassPurpleFlowers_n' : require('./assets/img/GrassPurpleFlowers_N.png'),
@@ -144,6 +147,12 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.setNodePath('planes', planes);
 
 
+            const fboTexture = new FBOTexture(gl);
+            fboTexture.init(1024, 1024);
+
+            edgeGl.registerFboTexture("fboTest", fboTexture);
+
+
             //
             // Scene objects
             //
@@ -160,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor');
+            skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor', 'fboTest');
             skyDome.setCamera(camera);
             edgeGl.sky = skyDome;
 
@@ -168,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const floorObject = new SceneObject(gl);
 
             floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-            floorObject.setTexture(edgeGl.textures.rock);
+            floorObject.setTexture(edgeGl.textures.fboTest);
             floorObject.setPosition(0, 0, -200);
 
             edgeGl.registerSceneObject('floor', floorObject, 'base', 'static');
@@ -181,6 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
             floorObject2.setPosition(200, 0, -200);
 
             edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static');
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboTest');
 
             //
             const sphereObject = new SceneObject(gl);
@@ -191,6 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sphereObject.roll = 90.0;
 
             edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static');
+            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboTest');
 
             //
             const sphereObject2 = new SceneObject(gl);
@@ -200,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sphereObject2.setPosition(200, 100, -200);
 
             edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
+            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboTest');
 
             //
             const terrain = new Terrain();
@@ -213,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
             terrainObject.setTexture(edgeGl.textures.grassPurpleFlowers);
 
             edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static');
+            edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static', 'fboTest');
 
             //
             const terrainNormalDebugObject = new SceneObject(gl);
@@ -232,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.lights.light0.setSceneObject(sunLightObject);
 
             edgeGl.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
+            edgeGl.registerSceneObject('sunLight', sunLightObject, 'base', 'static', 'fboTest');
 
             // const sunLightVectorObject = new SceneObject(gl);
             // sunLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light0.position, 20.0));
@@ -251,6 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.lights.light1.setSceneObject(blueLightObject);
 
             edgeGl.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
+            edgeGl.registerSceneObject('blueLight', blueLightObject, 'base', 'static', 'fboTest');
 
             // const blueLightVectorObject = new SceneObject(gl);
             // blueLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light1.position, 20.0));

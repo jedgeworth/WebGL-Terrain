@@ -35,6 +35,7 @@ module.exports = class EdgeGL{
         };
 
         this.textures = {};
+        this.frameBuffers = {};
 
         this.fogSettings = {
             color: [0.8, 0.9, 1.0, 1.0],
@@ -46,10 +47,12 @@ module.exports = class EdgeGL{
          * Pairs items as {sceneObject: object, shader: shader}.
          */
         this.renderQueue = {
-            ortho: {},
-            static: {},
-            dynamic: {},
-            nonDepth: {},
+            default: {
+                ortho: {},
+                static: {},
+                dynamic: {},
+                nonDepth: {},
+            },
         };
 
         this.lastUpdateTime = 0;
@@ -95,6 +98,9 @@ module.exports = class EdgeGL{
             console.error("Unable to initialize WebGL.");
             return false;
         }
+
+        this.gl.getExtension("OES_texture_float");
+        this.gl.getExtension("OES_texture_float_linear");
 
         //this.gl.clearColor(100/255, 149/255, 237/255, 1.0); // Cornflower blue
         this.gl.clearColor(0.8, 0.9, 1.0, 1.0);
@@ -235,7 +241,6 @@ module.exports = class EdgeGL{
         }
 
         this.textures[imageName] = texture;
-
     }
 
     /**
@@ -269,6 +274,23 @@ module.exports = class EdgeGL{
         for (const [imageName, textureImage] of Object.entries(this.textureImages)) {
             this.registerTexture(imageName);
         }
+    }
+
+    /**
+     * Registers a texture from a frame buffer texture object.
+     * @param {*} name
+     * @param {*} fboTexture
+     */
+    registerFboTexture(name, fboTexture) {
+        this.textures[name] = fboTexture;
+        this.frameBuffers[name] = fboTexture;
+
+        this.renderQueue[name] = {
+            ortho: {},
+            static: {},
+            dynamic: {},
+            nonDepth: {},
+        };
     }
 
 
@@ -307,22 +329,34 @@ module.exports = class EdgeGL{
 
 
     /**
-     * Registers a sceneObject.
+     * Registers a sceneObject and adds it to a render queue.
+     *
+     * A sceneObject can be added to multiple queues with subsequent calls to this method and
+     * different fboTextureNames.
+     *
+     * Shader object is only set if registering object to the default queue (@todo: fix this.)
+     *
      *
      * @param {*} sceneObject The sceneObject.
      * @param {*} shaderObject The shader Object to render with.
-     * @param {*} renderContext Ortho, static, or timed.
+     * @param {*} renderContext Ortho, static, or nonDepth.
+     * @param {*} fboTextureName Name of framebuffer. If not set, sceneObject is registered to the default render queue.
      */
-    registerSceneObject(name, sceneObject, shaderName, renderContext) {
+    registerSceneObject(name, sceneObject, shaderName, renderContext, fboTextureName) {
 
-        this.sceneObjects[name] = sceneObject;
-        sceneObject.setName(name);
-        sceneObject.setShaderProgram(this.shaders[shaderName]);
+        let targetBuffer;
 
-        this.renderQueue[renderContext][name] = {
-            shaderObject: this.shaders[shaderName],
-            sceneObject: sceneObject,
-        };
+        if (fboTextureName === undefined) {
+            targetBuffer = 'default';
+            this.sceneObjects[name] = sceneObject;
+            sceneObject.setName(name);
+            sceneObject.setShaderProgram(this.shaders[shaderName]);
+
+        } else {
+            targetBuffer = fboTextureName;
+        }
+
+        this.renderQueue[targetBuffer][renderContext][name] = sceneObject;
     }
 
 
@@ -350,22 +384,20 @@ module.exports = class EdgeGL{
 
     /**
      * Renders the specified object render queue.
-     * @param {*} renderContext ortho, static, or timed.
-     * @param {*} matrices Matrices, as prepared in index->drawScene.
-     * @param {*} delta If renderContext is timed, this is the delta between frames.
+     * @param {*} renderContext ortho, static, or nonDepth.
      */
-    render(renderContext, delta) {
+    render(targetBuffer, renderContext) {
 
-        if (this.renderQueue[renderContext] !== undefined) {
+        if (this.renderQueue[targetBuffer][renderContext] !== undefined) {
 
             if (renderContext === 'nonDepth') {
                 this.gl.disable(this.gl.DEPTH_TEST);
             }
 
-            for (const [objectName, objectWithShader] of Object.entries(this.renderQueue[renderContext])) {
+            for (const [name, sceneObject] of Object.entries(this.renderQueue[targetBuffer][renderContext])) {
 
-                if (objectWithShader.sceneObject.enabled && objectWithShader.sceneObject.parentSceneObject === null) {
-                    objectWithShader.sceneObject.render(this);
+                if (sceneObject.enabled && sceneObject.parentSceneObject === null) {
+                    sceneObject.render(this);
                 }
             }
 
@@ -389,16 +421,32 @@ module.exports = class EdgeGL{
             this.sky.update();
         }
 
+        this.camera.update(true);
+        this.camera.debug('cameraDebug');
+
+        Object.entries(this.renderQueue).forEach(([targetBuffer, objects]) => {
+
+            if (targetBuffer !== 'default') {
+                this.frameBuffers[targetBuffer].startRender();
+
+                this.render(targetBuffer, 'nonDepth');
+                this.render(targetBuffer, 'static');
+
+                this.frameBuffers[targetBuffer].endRender();
+            }
+
+        });
+
+        this.camera.update();
+
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        this.camera.update();
-        this.camera.debug('cameraDebug');
 
-        this.render('nonDepth');
-        this.render('static');
+        this.render('default', 'nonDepth');
+        this.render('default', 'static');
 
-        // Handle any animated meshes.
+
         const currentTime = (new Date).getTime();
         if (this.lastUpdateTime) {
             const delta = currentTime - this.lastUpdateTime;

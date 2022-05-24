@@ -36,13 +36,13 @@ module.exports = class SkyDome {
 
     /**
      * Registers the scene objects with the app registry.
-     * @param {*} appRegistry The app registry.
+     * @param {*} edgeGl The app registry.
      * @param {*} domeName A unique name for the dome's scene object.
      * @param {*} floorName A unique name for the floor's scene object.
      */
-    registerSceneObjects(appRegistry, domeName, floorName) {
-        appRegistry.registerSceneObject(floorName, this.floorSceneObject, 'base', 'nonDepth');
-        appRegistry.registerSceneObject(domeName, this.domeSceneObject, 'base', 'nonDepth');
+    registerSceneObjects(edgeGl, domeName, floorName, targetBuffer) {
+        edgeGl.registerSceneObject(floorName, this.floorSceneObject, 'base', 'nonDepth', targetBuffer);
+        edgeGl.registerSceneObject(domeName, this.domeSceneObject, 'base', 'nonDepth', targetBuffer);
     }
 
     /**
