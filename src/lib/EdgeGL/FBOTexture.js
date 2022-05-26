@@ -7,9 +7,11 @@
  * @author: James Edgeworth (https://jamesedgeworth.com)
  */
 
+const Texture = require("./Texture");
+
 module.exports = class FBOTexture {
 
-    constructor(gl) {
+    constructor(gl, textureObject) {
 
         this.gl = gl;
 
@@ -20,7 +22,13 @@ module.exports = class FBOTexture {
         this.fbo = 0;
         this.renderBuffer = null;
 
-        this.glTexture = null;
+        this.texture = null;
+
+        this.cameraParams = null;
+
+        if (textureObject !== undefined) {
+            this.texture = textureObject;
+        }
     }
 
 
@@ -34,6 +42,10 @@ module.exports = class FBOTexture {
 
         this.width = width;
         this.height = height;
+
+        if (!this.texture) {
+            this.texture = new Texture();
+        }
 
         this.fbo = this.gl.createFramebuffer();
 
@@ -53,23 +65,23 @@ module.exports = class FBOTexture {
 
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.renderBuffer);
 
-        this.glTexture = this.gl.createTexture();
+        const glTexture = this.gl.createTexture();
 
-        if (!this.glTexture) {
+        if (!glTexture) {
             throw "FBOTexture: Could not create texture.";
         }
 
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.glTexture);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, glTexture);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.FLOAT, null);
 
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
 
 
         //
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.glTexture, 0);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, glTexture, 0);
         this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.width, this.height);
         this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.renderBuffer);
 
@@ -78,6 +90,8 @@ module.exports = class FBOTexture {
         if (status != this.gl.FRAMEBUFFER_COMPLETE) {
             throw "FBOTexture: Could not successfully bind framebuffer: "+ status.toString();
         }
+
+        this.texture.setGlTexture(glTexture);
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);

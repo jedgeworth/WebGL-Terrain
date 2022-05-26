@@ -41,6 +41,15 @@
     }
 
     /**
+     * Sets an already defined glTexture.
+     *
+     * @param {*} glTexture
+     */
+    setGlTexture(glTexture) {
+        this.glTexture = glTexture;
+    }
+
+    /**
      * Sets the normal buffer.
      * @param {*} image
      * @returns

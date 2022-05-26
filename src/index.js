@@ -25,6 +25,7 @@ const SpherePrimitive = require('./lib/EdgeGL/Primitives/SpherePrimitive');
 const Heightmap = require('./lib/EdgeGL/Heightmap');
 const Terrain = require('./lib/EdgeGL/Terrain');
 const SkyDome = require('./lib/EdgeGL/SkyDome');
+const WaterSceneObject = require('./lib/EdgeGL/WaterSceneObject');
 
 const FBOTexture = require('./lib/EdgeGL/FBOTexture');
 
@@ -66,11 +67,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 'lightbulb' : require('./assets/img/lightbulb.jpg'),
                 'sky' : require('./assets/img/sky.png'),
                 'waterDeep' : require('./assets/img/water_deep.png'),
+
+                'water' : require('./assets/img/blank.png'),
+                'water_dudv' : require('./assets/img/dudv.png'),
             });
 
             edgeGl.registerShaders({
                 line: "line",
                 base: "base",
+                water: "water",
                 billboard: "billboard",
             });
 
@@ -147,10 +152,17 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.setNodePath('planes', planes);
 
 
-            const fboTexture = new FBOTexture(gl);
-            fboTexture.init(1024, 1024);
+            const fboRefractionTexture = new FBOTexture(gl, edgeGl.textures.water);
+            fboRefractionTexture.init(1024, 1024);
+            edgeGl.registerFboTexture("fboRefraction", fboRefractionTexture);
 
-            edgeGl.registerFboTexture("fboTest", fboTexture);
+            const fboReflectionTexture = new FBOTexture(gl);
+            fboReflectionTexture.init(1024, 1024);
+            fboReflectionTexture.cameraParams = {
+                reflect: true,
+                yOffset: 0,
+            };
+            edgeGl.registerFboTexture("fboReflection", fboReflectionTexture);
 
 
             //
@@ -169,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor');
-            skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor', 'fboTest');
+            skyDome.registerSceneObjects(edgeGl, 'domeSky', 'domeFloor', 'fboReflection');
             skyDome.setCamera(camera);
             edgeGl.sky = skyDome;
 
@@ -177,8 +189,8 @@ document.addEventListener("DOMContentLoaded", () => {
             //
             const floorObject = new SceneObject(gl);
 
-            floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-            floorObject.setTexture(edgeGl.textures.fboTest);
+            floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
+            floorObject.setTexture(edgeGl.textures.fboRefraction);
             floorObject.setPosition(0, 0, -200);
 
             edgeGl.registerSceneObject('floor', floorObject, 'base', 'static');
@@ -186,12 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
             //
             const floorObject2 = new SceneObject(gl);
 
-            floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
-            floorObject2.setTexture(edgeGl.textures['243']);
+            floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
+            //floorObject2.setTexture(edgeGl.textures['243']);
+            floorObject2.setTexture(edgeGl.textures.fboReflection);
             floorObject2.setPosition(200, 0, -200);
 
             edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static');
-            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboRefraction');
 
             //
             const sphereObject = new SceneObject(gl);
@@ -202,7 +215,8 @@ document.addEventListener("DOMContentLoaded", () => {
             sphereObject.roll = 90.0;
 
             edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static');
-            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboRefraction');
+            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboReflection');
 
             //
             const sphereObject2 = new SceneObject(gl);
@@ -212,7 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
             sphereObject2.setPosition(200, 100, -200);
 
             edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
-            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboRefraction');
+            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboReflection');
 
             //
             const terrain = new Terrain();
@@ -226,7 +241,8 @@ document.addEventListener("DOMContentLoaded", () => {
             terrainObject.setTexture(edgeGl.textures.grassPurpleFlowers);
 
             edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static');
-            edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static', 'fboRefraction');
+            edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static', 'fboReflection');
 
             //
             const terrainNormalDebugObject = new SceneObject(gl);
@@ -238,6 +254,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             //
+            const waterObject = new WaterSceneObject(gl);
+
+            waterObject.setPrimitive(new QuadPlanePrimitive(gl, 1024, false));
+            waterObject.setTexture(edgeGl.textures.fboRefraction);
+            waterObject.setTexture1(edgeGl.textures.fboReflection);
+            waterObject.setPosition(1024, 100, 1024);
+
+            edgeGl.registerSceneObject('water', waterObject, 'water', 'static');
+
+            //
             const sunLightObject = new SceneObject(gl);
             sunLightObject.setPrimitive(new QuadPlanePrimitive(gl, 20, true));
             sunLightObject.setTexture(edgeGl.textures.lightbulb);
@@ -245,8 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
             sunLightObject.useLighting = false;
             edgeGl.lights.light0.setSceneObject(sunLightObject);
 
-            edgeGl.registerSceneObject('sunLight', sunLightObject, 'base', 'static');
-            edgeGl.registerSceneObject('sunLight', sunLightObject, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('sunLight', sunLightObject, 'billboard', 'static');
+            edgeGl.registerSceneObject('sunLight', sunLightObject, 'billboard', 'static', 'fboRefraction');
 
             // const sunLightVectorObject = new SceneObject(gl);
             // sunLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light0.position, 20.0));
@@ -265,8 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
             blueLightObject.useLighting = false;
             edgeGl.lights.light1.setSceneObject(blueLightObject);
 
-            edgeGl.registerSceneObject('blueLight', blueLightObject, 'base', 'static');
-            edgeGl.registerSceneObject('blueLight', blueLightObject, 'base', 'static', 'fboTest');
+            edgeGl.registerSceneObject('blueLight', blueLightObject, 'billboard', 'static');
+            edgeGl.registerSceneObject('blueLight', blueLightObject, 'billboard', 'static', 'fboRefraction');
 
             // const blueLightVectorObject = new SceneObject(gl);
             // blueLightVectorObject.setPrimitive(new LinePrimitive(gl, edgeGl.lights.light1.position, 20.0));
@@ -394,6 +420,14 @@ function bindWebUI(gl, edgeGl) {
 
     document.querySelector('select[class="correctD3d"]').addEventListener('change', (event) => {
         edgeGl.lightSettings.correctD3d = parseInt(document.getElementById('correctD3d').value);
+    });
+
+    document.querySelector('input[class="waterLevel"]').addEventListener('change', (event) => {
+        edgeGl.waterSettings.level = parseInt(document.getElementById('waterLevel').value);
+    });
+
+    document.querySelector('input[class="waterOffset"]').addEventListener('change', (event) => {
+        edgeGl.waterSettings.offset = parseInt(document.getElementById('waterOffset').value);
     });
 
 

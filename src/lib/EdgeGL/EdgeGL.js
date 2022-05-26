@@ -43,6 +43,11 @@ module.exports = class EdgeGL{
             far: 5000.0,
         };
 
+        this.waterSettings = {
+            level: 100,
+            offset: 150
+        };
+
         /**
          * Pairs items as {sceneObject: object, shader: shader}.
          */
@@ -282,7 +287,7 @@ module.exports = class EdgeGL{
      * @param {*} fboTexture
      */
     registerFboTexture(name, fboTexture) {
-        this.textures[name] = fboTexture;
+        this.textures[name] = fboTexture.texture;
         this.frameBuffers[name] = fboTexture;
 
         this.renderQueue[name] = {
@@ -421,12 +426,26 @@ module.exports = class EdgeGL{
             this.sky.update();
         }
 
-        this.camera.update(true);
-        this.camera.debug('cameraDebug');
+        // Refraction texture
+        //this.camera.update();
+
+        // Reflection texture (flip texcoord y in shader)
+        //this.camera.update(true, this.waterSettings.offset);
+
+        this.sceneObjects.water.setPosition(1024, this.waterSettings.level, 1024);
+
 
         Object.entries(this.renderQueue).forEach(([targetBuffer, objects]) => {
 
             if (targetBuffer !== 'default') {
+                const cameraParams = this.frameBuffers[targetBuffer].cameraParams;
+
+                if (cameraParams !== null) {
+                    this.camera.update(cameraParams.reflect, cameraParams.yOffset);
+                } else {
+                    this.camera.update();
+                }
+
                 this.frameBuffers[targetBuffer].startRender();
 
                 this.render(targetBuffer, 'nonDepth');
@@ -438,25 +457,24 @@ module.exports = class EdgeGL{
         });
 
         this.camera.update();
+        this.camera.debug('cameraDebug');
 
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-
         this.render('default', 'nonDepth');
         this.render('default', 'static');
 
-
         const currentTime = (new Date).getTime();
         if (this.lastUpdateTime) {
-            const delta = currentTime - this.lastUpdateTime;
+            this.delta = currentTime - this.lastUpdateTime;
 
             if (this.lights.light0.type != 0) {
-                this.nodePaths.terrainPerimeter.tick(delta);
+                this.nodePaths.terrainPerimeter.tick(this.delta);
             }
 
             if (this.lights.light1.type != 0) {
-                this.nodePaths.planes.tick(delta);
+                this.nodePaths.planes.tick(this.delta);
             }
         }
 

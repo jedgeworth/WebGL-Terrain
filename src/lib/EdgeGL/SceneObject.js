@@ -51,6 +51,7 @@
         this.glTexture = null;
         this.glTextureNormalMap = null;
         this.texture0 = null;
+        this.texture1 = null;
         this.flipTexture = false;
 
         this.position = new Vector3(0.0, 0.0, 0.0);
@@ -177,12 +178,19 @@
         }
 
         this.texture0 = texture;
+    }
 
-        // this.glTexture = texture;
+    /**
+     * Set the texture object.
+     * @param {*} texture GL_TEXTURE_2D object.
+     */
+     setTexture1(texture1) {
 
-        // if (normalMap !== undefined) {
-        //     this.glTextureNormalMap = normalMap;
-        // }
+        if (texture1 === undefined) {
+            throw "SceneObject: Trying to set a texture that is undefined.";
+        }
+
+        this.texture1 = texture1;
     }
 
     /**
@@ -294,14 +302,16 @@
         // appRegistry.camera.matrices.mvRotate(this.roll, [0, 0, 1]);
 
         this.shaderProgram.use();
+
         this.shaderProgram.setLightUniforms(appRegistry.lights, appRegistry.lightSettings, this.useLighting);
         this.shaderProgram.setFogUniforms(appRegistry.fogSettings, this.useFog);
-
         this.shaderProgram.setCameraUniforms(appRegistry.camera);
 
         //this.checkBuffers(this.shaderProgram);
 
         this.shaderProgram.enableAttributes();
+
+
 
         // Vertices
         if (this.verticesBuffer && this.shaderProgram.hasVertexPositionAttribute) {
@@ -322,21 +332,40 @@
         }
 
         // Textures
-        if (this.texture0 && this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
-            this.gl.activeTexture(this.gl.TEXTURE0);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTexture);
+        if (this.shaderProgram.hasTextureCoordAttribute && this.textureCoordBuffer) {
 
-            this.shaderProgram.setUniform1i("u_Texture0", 0);
+            if (this.texture0) {
+                this.gl.activeTexture(this.gl.TEXTURE0);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTexture);
 
-            if (this.texture0.glTextureNormal) {
-                this.gl.activeTexture(this.gl.TEXTURE1);
-                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureNormal);
+                this.shaderProgram.setUniform1i("u_Texture0", 0);
 
-                this.shaderProgram.setUniform1i("u_TextureNormal0", 0);
-                this.shaderProgram.setUniform1i("u_UseNormalMapping", 1);
-            } else {
-                this.shaderProgram.setUniform1i("u_UseNormalMapping", 0);
+                if (this.texture0.glTextureNormal) {
+                    this.gl.activeTexture(this.gl.TEXTURE1);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureNormal);
+
+                    this.shaderProgram.setUniform1i("u_TextureNormal0", 1);
+                    this.shaderProgram.setUniform1i("u_UseNormalMapping", 1);
+                } else {
+                    this.shaderProgram.setUniform1i("u_UseNormalMapping", 0);
+                }
+
+                if (this.texture0.glTextureDUDV) {
+                    this.gl.activeTexture(this.gl.TEXTURE2);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureDUDV);
+
+                    this.shaderProgram.setUniform1i("u_TextureDudv0", 2);
+
+                }
             }
+
+            if (this.texture1) {
+                this.gl.activeTexture(this.gl.TEXTURE3);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture1.glTexture);
+
+                this.shaderProgram.setUniform1i("u_Texture1", 3);
+            }
+
 
             this.gl.enableVertexAttribArray(this.shaderProgram.textureCoordAttribute);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);

@@ -25,6 +25,8 @@ module.exports = class Shader {
 
         this.shaderProgram = null;
 
+        this.isBound = false;
+
         this.vertexPositionAttribute = null;
         this.textureCoordAttribute = null;
         this.vertexNormalAttribute = null;
@@ -127,9 +129,14 @@ module.exports = class Shader {
      * Binds the shader program to the gl context.
      */
     use() {
-        this.gl.useProgram(this.shaderProgram);
 
-        this.variableLog = [];
+        if (!this.isBound) {
+            this.gl.useProgram(this.shaderProgram);
+            this.isBound = true;
+
+            this.variableLog = [];
+        }
+
     }
 
     /**
@@ -137,6 +144,7 @@ module.exports = class Shader {
      */
     stop() {
         this.gl.useProgram(null);
+        this.isBound = false;
     }
 
     /**
@@ -197,6 +205,7 @@ module.exports = class Shader {
         this.setUniformMatrix3fv('u_NormalMatrix', new Float32Array(normalMatrix.flatten()));
         this.setUniform3fv(`u_CameraWorldPosition`, camera.getPosition());
     }
+
 
     /**
      * Enables shader attributes.

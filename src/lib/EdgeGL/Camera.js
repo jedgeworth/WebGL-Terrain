@@ -161,7 +161,7 @@ module.exports = class Camera {
     /**
      * Called per frame to update the scene with the current camera position/rotation.
      */
-    update(reflected) {
+    update(reflected, yOffset) {
         let xTrans, yTrans, zTrans;
 
         xTrans = -this.xPos;
@@ -174,9 +174,14 @@ module.exports = class Camera {
 
 
         if (reflected === true) {
-            pitch  = 0;
-            roll = 180;
+            pitch  *= -1;
+            yTrans *= -1;
         }
+
+        if (yOffset) {
+            yTrans += yOffset;
+        }
+
 
         this.matrices.loadIdentity();
         this.matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);

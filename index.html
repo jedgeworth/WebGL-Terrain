@@ -390,6 +390,268 @@
         }
     </script>
 
+
+    <script id="water-vs" type="x-shader/x-vertex">
+        precision highp float;
+        precision mediump int;
+
+        attribute vec3 a_VertexNormal;
+        attribute vec3 a_VertexPosition;
+        attribute vec2 a_TextureCoord;
+
+        struct Light {
+            vec3 ambient;
+            vec3 diffuse;
+            vec3 specular;
+            vec3 position;
+            vec3 direction;
+            int type;
+        };
+
+        uniform bool u_UseNormalMap;
+        uniform bool u_CorrectD3d;
+        uniform bool u_UseLighting;
+        uniform bool u_UseFog;
+
+        uniform Light u_Lights[2];
+
+        uniform mat3 u_NormalMatrix;
+        uniform mat4 u_ModelViewMatrix;
+        uniform mat4 u_ProjectionMatrix;
+        uniform vec3 u_CameraWorldPosition;
+
+        uniform float u_WaterMovement;
+
+        varying vec3 v_VertexPosition;
+        varying vec2 v_TextureCoord;
+        varying vec3 v_VertexNormal;
+
+        varying vec3 v_EyeVector;
+        varying vec3 v_LightVectors[2];
+
+        varying vec3 v_RawNormal;
+        varying float v_FogDepth;
+
+        varying vec4 v_ClipSpace;
+        varying vec4 v_EyespacePosition;
+
+        void main(void) {
+
+            vec4 v4VertexPosition = vec4(a_VertexPosition, 1.0);
+
+            //v_VertexNormal = u_NormalMatrix * a_VertexNormal;
+            v_VertexNormal = a_VertexNormal;
+            v_EyeVector = -vec3(a_VertexPosition);
+            v_VertexPosition = a_VertexPosition;
+
+            v_RawNormal = a_VertexNormal;
+            v_FogDepth = (u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition).z;
+
+            if (u_Lights[0].type == 0) {
+                v_LightVectors[0] = normalize(u_Lights[0].direction);
+            } else {
+                v_LightVectors[0] = -(u_Lights[0].position - v_VertexPosition);
+            }
+
+            if (u_Lights[1].type == 0) {
+                v_LightVectors[1] = normalize(u_Lights[1].direction);
+            } else {
+                v_LightVectors[1] = -(u_Lights[1].position - v_VertexPosition);
+            }
+
+            v_TextureCoord = a_TextureCoord * 10.0;
+
+            v_ClipSpace = u_ProjectionMatrix * u_ModelViewMatrix * vec4(v4VertexPosition.x, 0, v4VertexPosition.z, 1.0);
+            v_EyespacePosition = u_ModelViewMatrix * v4VertexPosition;
+
+            gl_PointSize = 2.0;
+            gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition;
+        }
+    </script>
+
+    <script id="water-fs" type="x-shader/x-fragment">
+        precision highp float;
+        precision mediump int;
+
+        struct Light {
+            vec3 ambient;
+            vec3 diffuse;
+            vec3 specular;
+            vec3 position;
+            vec3 direction;
+            int type;
+        };
+
+
+        uniform sampler2D u_Texture0;
+        uniform sampler2D u_TextureNormal0;
+        uniform sampler2D u_TextureDudv0;
+
+        uniform sampler2D u_Texture1;
+        uniform sampler2D u_TextureNormal1;
+
+        uniform bool u_UseNormalMap;
+        uniform bool u_CorrectD3d;
+        uniform bool u_UseLighting;
+        uniform bool u_UseFog;
+
+        uniform Light u_Lights[2];
+        uniform float u_Shininess;
+
+        uniform vec4 u_FogColor;
+        uniform float u_FogNear;
+        uniform float u_FogFar;
+
+        uniform float u_WaterMovement;
+
+
+        varying vec3 v_VertexPosition;
+        varying vec2 v_TextureCoord;
+        varying vec3 v_VertexNormal;
+
+        varying vec4 v_ClipSpace;
+        varying vec4 v_EyespacePosition;
+
+        varying vec3 v_EyeVector;
+        varying vec3 v_LightVectors[2];
+
+        varying vec3 v_RawNormal;
+        varying float v_FogDepth;
+
+
+        const float attenuationConstant = 0.1;
+        const float attenuationLinear = 0.1;
+        const float attenuationExponent = 0.1;
+
+        const vec4 u_MaterialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
+        const vec4 u_MaterialDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
+        const vec4 u_MaterialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+
+        ////////////////////////////////////////////////////////////////////////
+
+        vec4 lighting(Light light, vec3 lightVector) {
+
+            vec3 L = normalize( lightVector );
+            vec3 N = normalize( -v_VertexNormal );
+
+            if (u_UseNormalMap) {
+                vec3 normalColor = texture2D(u_TextureNormal0, v_TextureCoord).rgb;
+
+                // Assume normal map is D3D - if so we flip the green value.
+                // @todo: Do this on the Texture() loader.
+                if (u_CorrectD3d) {
+                    normalColor.g *= -1.0;
+                }
+
+                vec3 fragmentNormal = normalize( normalColor * 2.0 - 1.0 );
+                N = normalize(fragmentNormal * v_VertexNormal);
+            }
+
+
+            vec4 ambient = vec4(light.ambient, 1.0) * u_MaterialAmbient;
+            vec4 diffuse = vec4(0.0, 0.0, 0.0, 1.0);
+            vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+            float distance = length(lightVector);
+
+            if ((light.type == 2 && distance < 900.0) || light.type != 2) {
+                float lambertTerm = dot(N, L);
+
+                if (lambertTerm > 0.0) {
+                    diffuse = vec4(light.diffuse, 1.0) * u_MaterialDiffuse * lambertTerm;
+
+                    vec3 E = normalize( v_EyeVector );
+                    vec3 R = normalize(reflect(L, N));
+
+                    float specularTerm = pow( max(dot(R, E), 0.0), u_Shininess);
+                    specular = vec4(light.specular, 1.0) * u_MaterialSpecular * specularTerm;
+                }
+
+                if (light.type == 1 && distance > 9.0) {
+                    float attenuation = attenuationConstant +
+                            attenuationLinear * distance +
+                            attenuationExponent * distance * distance;
+
+                    //diffuse /= attenuation;
+                    //specular /= attenuation;
+                }
+
+            }
+
+            return ambient + diffuse + specular;
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+
+        vec4 fog(vec4 inFinalColor) {
+
+            float fogAmount = smoothstep( u_FogNear, u_FogFar, v_FogDepth );
+            return mix( inFinalColor, u_FogColor, fogAmount );
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+
+
+        vec4 texturing() {
+            //if ( dot(v_EyespacePosition, vec4(0, -150, 0, 1)) < 0.0 ) {
+                //discard;
+            //}
+
+            vec2 ndc = (v_ClipSpace.xy / v_ClipSpace.w) / 2.0 + 0.5;
+
+            vec2 refractionTexCoords = vec2(ndc.x, ndc.y);
+            vec2 reflectionTexCoords = vec2(ndc.x, -ndc.y);
+
+            vec2 dudvTexCoordRefract = (texture2D(
+                u_TextureDudv0,
+                vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t)
+            ).rg * 2.0 - 1.0) * 0.2;
+
+            vec2 dudvTexCoordReflect = (texture2D(
+                u_TextureDudv0,
+                vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t + u_WaterMovement)
+            ).rg * 2.0 - 1.0) * 0.2;
+
+            refractionTexCoords += dudvTexCoordRefract;
+            reflectionTexCoords += dudvTexCoordReflect;
+
+            return mix(
+                texture2D(u_Texture0, refractionTexCoords),
+                texture2D(u_Texture1, reflectionTexCoords),
+                0.5
+            );
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+
+        void main(void) {
+            vec4 finalColor;
+
+            finalColor += texturing();
+
+          //if (u_UseLighting) {
+            //finalColor *= (
+                //lighting(u_Lights[0], v_LightVectors[0]) +
+                //lighting(u_Lights[1], v_LightVectors[1])
+            //);
+          //}
+
+          //if (u_UseFog) {
+            //finalColor = fog(finalColor);
+          //}
+
+          //if (v_RawNormal.y < .85 && v_RawNormal.x < .85 && v_RawNormal.z < .85) {
+          //    finalColor.r = 255.0;
+          //}
+
+          //finalColor.r = v_VertexNormal.x * 0.5 + 1.0;
+          //finalColor.g = v_VertexNormal.y * 0.5 + 1.0;
+          //finalColor.b = v_VertexNormal.z * 0.5 + 1.0;
+
+          gl_FragColor = finalColor;
+        }
+    </script>
+
 </head>
     <body>
         <div id="debug"></div>
@@ -435,6 +697,7 @@
                     <option value="1" selected>On</option>
                 </select>
             </label><br><br>
+
 
             <label>
                 Shininess
@@ -496,6 +759,18 @@
             <label>
                 Far
                 <input class="fog" type="text" id="fogFar" name="fogFar" value="5000.0">
+            </label>
+
+            <h3>Water</h3>
+
+            <label>
+                Level
+                <input class="waterLevel" type="number" id="waterLevel" name="waterLevel" value="100">
+            </label>
+
+            <label>
+                Offset
+                <input class="waterOffset" type="number" id="waterOffset" name="waterOffset" value="100">
             </label>
 
             <div id="cameraDebug"></div>
