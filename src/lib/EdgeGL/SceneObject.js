@@ -292,7 +292,7 @@
      * @todo sceneObject should not need to know of the entire appRegistry. Find
      * a better way to pass lighting and fog settings in.
      */
-    render(appRegistry) {
+    render(appRegistry, fboTexture) {
 
         appRegistry.camera.matrices.mvPushMatrix();
 
@@ -306,6 +306,12 @@
         this.shaderProgram.setLightUniforms(appRegistry.lights, appRegistry.lightSettings, this.useLighting);
         this.shaderProgram.setFogUniforms(appRegistry.fogSettings, this.useFog);
         this.shaderProgram.setCameraUniforms(appRegistry.camera);
+
+        if (fboTexture) {
+            this.shaderProgram.setFramebufferUniforms(fboTexture.shaderUniforms);
+        } else {
+            this.shaderProgram.removeFramebufferUniforms();
+        }
 
         //this.checkBuffers(this.shaderProgram);
 

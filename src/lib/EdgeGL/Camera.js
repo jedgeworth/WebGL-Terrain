@@ -17,6 +17,8 @@ module.exports = class Camera {
         this.TURNSPEED = 1;
         this.PIOVER180 = 0.0174532925;
 
+        this.isOrtho = false;
+
         this.xPos = 0.0;
         this.yPos = 0.0;
         this.zPos = 100.0;
@@ -26,6 +28,14 @@ module.exports = class Camera {
         this.roll = 0.0;
 
         this.matrices = new Matrices();
+    }
+
+    setOrtho() {
+        this.isOrtho = true;
+    }
+
+    setPerspective() {
+        this.isOrtho = false;
     }
 
     /**
@@ -174,8 +184,8 @@ module.exports = class Camera {
 
 
         if (reflected === true) {
-            pitch  *= -1;
-            yTrans *= -1;
+            pitch  = 1 - pitch;
+            yTrans = 1 - yTrans;
         }
 
         if (yOffset) {
@@ -184,13 +194,17 @@ module.exports = class Camera {
 
 
         this.matrices.loadIdentity();
-        this.matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
 
-        this.matrices.mvRotate(pitch, [this.TURNSPEED, 0, 0]);
-        this.matrices.mvRotate(yaw, [0, this.TURNSPEED, 0]);
-        this.matrices.mvRotate(roll, [0, 0, this.TURNSPEED]);
+        if (this.isOrtho) {
+            this.matrices.perspectiveMatrix = Sylvester.makeOrtho(0.0, 1000, 0.0, 1000, -10, 6000);
+        } else {
+            this.matrices.perspectiveMatrix = Sylvester.makePerspective(45, 1000.0/1000.0, 0.1, 6000.0);
+            this.matrices.mvRotate(pitch, [this.TURNSPEED, 0, 0]);
+            this.matrices.mvRotate(yaw, [0, this.TURNSPEED, 0]);
+            this.matrices.mvRotate(roll, [0, 0, this.TURNSPEED]);
+            this.matrices.mvTranslate([xTrans, yTrans, zTrans]);
+        }
 
-        this.matrices.mvTranslate([xTrans, yTrans, zTrans]);
     }
 
     /**

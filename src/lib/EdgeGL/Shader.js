@@ -206,6 +206,29 @@ module.exports = class Shader {
         this.setUniform3fv(`u_CameraWorldPosition`, camera.getPosition());
     }
 
+    /**
+     * Sets uniforms from a FBOTexture object.
+     * Automatically passed in via SceneObject if within the context of a frame buffer.
+     * @param {*} framebufferShaderUniforms
+     */
+    setFramebufferUniforms(framebufferShaderUniforms) {
+        if (framebufferShaderUniforms) {
+            if (framebufferShaderUniforms.clipPlane !== undefined) {
+                this.setUniform4fv(`u_ClipPlane`, framebufferShaderUniforms.clipPlane);
+                this.setUniform1i('u_UseClipPlane', 1);
+            } else {
+                this.setUniform1i('u_UseClipPlane', 0);
+            }
+        } else {
+            this.setUniform1i('u_UseClipPlane', 0);
+        }
+
+    }
+
+    removeFramebufferUniforms() {
+        this.setUniform1i('u_UseClipPlane', 0);
+    }
+
 
     /**
      * Enables shader attributes.

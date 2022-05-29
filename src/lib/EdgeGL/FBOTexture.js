@@ -26,6 +26,10 @@ module.exports = class FBOTexture {
 
         this.cameraParams = null;
 
+        // Contains uniforms to pass to the shader only when rendering to
+        // this FBO.
+        this.shaderUniforms = null;
+
         if (textureObject !== undefined) {
             this.texture = textureObject;
         }

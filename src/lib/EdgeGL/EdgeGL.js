@@ -389,11 +389,18 @@ module.exports = class EdgeGL{
 
     /**
      * Renders the specified object render queue.
+     * @param {*} targetBuffer name of buffer to render to (or default).
      * @param {*} renderContext ortho, static, or nonDepth.
      */
     render(targetBuffer, renderContext) {
 
         if (this.renderQueue[targetBuffer][renderContext] !== undefined) {
+
+            let fboTexture = null;
+
+            if (targetBuffer !== 'default') {
+                fboTexture = this.frameBuffers[targetBuffer];
+            }
 
             if (renderContext === 'nonDepth') {
                 this.gl.disable(this.gl.DEPTH_TEST);
@@ -402,7 +409,7 @@ module.exports = class EdgeGL{
             for (const [name, sceneObject] of Object.entries(this.renderQueue[targetBuffer][renderContext])) {
 
                 if (sceneObject.enabled && sceneObject.parentSceneObject === null) {
-                    sceneObject.render(this);
+                    sceneObject.render(this, fboTexture);
                 }
             }
 
@@ -422,9 +429,9 @@ module.exports = class EdgeGL{
         this.keyboardHandler.handleKeys();
         this.handleWindowResize();
 
-        if (this.sky) {
-            this.sky.update();
-        }
+        this.camera.setPerspective();
+
+
 
         // Refraction texture
         //this.camera.update();
@@ -441,7 +448,11 @@ module.exports = class EdgeGL{
                 const cameraParams = this.frameBuffers[targetBuffer].cameraParams;
 
                 if (cameraParams !== null) {
-                    this.camera.update(cameraParams.reflect, cameraParams.yOffset);
+                    this.camera.update(cameraParams.reflect, this.waterSettings.level);
+
+                    if (this.sky) {
+                        this.sky.update(cameraParams.reflect);
+                    }
                 } else {
                     this.camera.update();
                 }
@@ -456,6 +467,10 @@ module.exports = class EdgeGL{
 
         });
 
+        if (this.sky) {
+            this.sky.update();
+        }
+
         this.camera.update();
         this.camera.debug('cameraDebug');
 
@@ -464,6 +479,13 @@ module.exports = class EdgeGL{
 
         this.render('default', 'nonDepth');
         this.render('default', 'static');
+
+        this.camera.setOrtho();
+        this.camera.update();
+
+        this.render('default', 'ortho');
+
+
 
         const currentTime = (new Date).getTime();
         if (this.lastUpdateTime) {

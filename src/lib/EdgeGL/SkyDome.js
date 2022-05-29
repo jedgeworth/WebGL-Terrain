@@ -57,8 +57,13 @@ module.exports = class SkyDome {
     /**
      * Called during the render loop to keep the dome at the camera position.
      */
-    update() {
+    update(reflected) {
         const position = this.camera.getPosition();
+
+        if (reflected) {
+            position[1] *= -1;
+        }
+
         position[1] -= 100.0;
 
         this.domeSceneObject.setPosition(position[0], position[1], position[2]);

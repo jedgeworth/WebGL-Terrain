@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.registerShaders({
                 line: "line",
                 base: "base",
+                minimal: "minimal",
                 water: "water",
                 billboard: "billboard",
             });
@@ -154,6 +155,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const fboRefractionTexture = new FBOTexture(gl, edgeGl.textures.water);
             fboRefractionTexture.init(1024, 1024);
+            fboRefractionTexture.shaderUniforms = {
+                clipPlane: [0, -1, 0, 100]
+            };
             edgeGl.registerFboTexture("fboRefraction", fboRefractionTexture);
 
             const fboReflectionTexture = new FBOTexture(gl);
@@ -161,6 +165,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fboReflectionTexture.cameraParams = {
                 reflect: true,
                 yOffset: 0,
+            };
+            fboReflectionTexture.shaderUniforms = {
+                clipPlane: [0, 1, 0, 100]
             };
             edgeGl.registerFboTexture("fboReflection", fboReflectionTexture);
 
@@ -191,9 +198,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
             floorObject.setTexture(edgeGl.textures.fboRefraction);
-            floorObject.setPosition(0, 0, -200);
+            floorObject.setPosition(100, 100, 1);
 
-            edgeGl.registerSceneObject('floor', floorObject, 'base', 'static');
+           // edgeGl.registerSceneObject('floor', floorObject, 'minimal', 'ortho');
 
             //
             const floorObject2 = new SceneObject(gl);
@@ -201,10 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
             floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
             //floorObject2.setTexture(edgeGl.textures['243']);
             floorObject2.setTexture(edgeGl.textures.fboReflection);
-            floorObject2.setPosition(200, 0, -200);
+            floorObject2.setPosition(300, 100, 1);
 
-            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static');
-            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboRefraction');
+            //edgeGl.registerSceneObject('floor2', floorObject2, 'minimal', 'ortho');
 
             //
             const sphereObject = new SceneObject(gl);
@@ -239,6 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
             terrainObject.setTexture(edgeGl.textures.grassPurpleFlowers);
+            //terrainObject.setPosition(0, -50, 0);
 
             edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static');
             edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static', 'fboRefraction');
@@ -427,7 +434,11 @@ function bindWebUI(gl, edgeGl) {
     });
 
     document.querySelector('input[class="waterOffset"]').addEventListener('change', (event) => {
-        edgeGl.waterSettings.offset = parseInt(document.getElementById('waterOffset').value);
+
+        edgeGl.frameBuffers.fboReflection.cameraParams.yOffset = parseInt(document.getElementById('waterOffset').value);
+        // edgeGl.frameBuffersfboReflection.shaderUniforms = {
+        //     clipPlane: [0, -1, 0, edgeGl.frameBuffers.fboReflection.cameraParams.yOffset]
+        // };
     });
 
 

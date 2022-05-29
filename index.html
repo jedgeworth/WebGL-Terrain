@@ -125,7 +125,10 @@
         uniform mat4 u_ProjectionMatrix;
         uniform vec3 u_CameraWorldPosition;
 
+        uniform vec4 u_ClipPlane;
+
         varying vec3 v_VertexPosition;
+        varying vec4 v_VertexEyePosition;
         varying vec2 v_TextureCoord;
         varying vec3 v_VertexNormal;
 
@@ -160,6 +163,7 @@
             }
 
             v_TextureCoord = a_TextureCoord;
+            v_VertexEyePosition =  v4VertexPosition;
 
             gl_PointSize = 2.0;
             gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition;
@@ -190,6 +194,7 @@
         uniform bool u_CorrectD3d;
         uniform bool u_UseLighting;
         uniform bool u_UseFog;
+        uniform bool u_UseClipPlane;
 
         uniform Light u_Lights[2];
         uniform float u_Shininess;
@@ -198,8 +203,10 @@
         uniform float u_FogNear;
         uniform float u_FogFar;
 
+        uniform vec4 u_ClipPlane;
 
         varying vec3 v_VertexPosition;
+        varying vec4 v_VertexEyePosition;
         varying vec2 v_TextureCoord;
         varying vec3 v_VertexNormal;
 
@@ -283,6 +290,13 @@
         ////////////////////////////////////////////////////////////////////////
 
         void main(void) {
+
+            if (u_UseClipPlane) {
+                if ( dot(v_VertexEyePosition, u_ClipPlane) <  -0.1 ) {
+                    discard;
+                }
+            }
+
 
           vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
 
@@ -385,6 +399,44 @@
             if (finalColor.r + finalColor.g + finalColor.b < 0.2) {
                 discard;
             }
+
+            gl_FragColor = finalColor;
+        }
+    </script>
+
+    <script id="minimal-vs" type="x-shader/x-vertex">
+        #version 100
+        precision highp float;
+
+        attribute vec3 a_VertexPosition;
+        attribute vec3 a_VertexColor;
+        attribute vec2 a_TextureCoord;
+
+        uniform mat4 u_ModelViewMatrix;
+        uniform mat4 u_ProjectionMatrix;
+
+        varying vec2 v_TextureCoord;
+        varying vec3 v_Color;
+
+        void main(void) {
+            gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * vec4(a_VertexPosition, 1.0);
+            v_Color = a_VertexColor;
+            v_TextureCoord = a_TextureCoord;
+        }
+    </script>
+
+    <script id="minimal-fs" type="x-shader/x-fragment">
+        #version 100
+        precision highp float;
+
+        varying vec2 v_TextureCoord;
+        varying vec3 v_Color;
+
+        uniform sampler2D u_Texture0;
+
+        void main(void) {
+
+            vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
 
             gl_FragColor = finalColor;
         }
@@ -593,9 +645,6 @@
 
 
         vec4 texturing() {
-            //if ( dot(v_EyespacePosition, vec4(0, -150, 0, 1)) < 0.0 ) {
-                //discard;
-            //}
 
             vec2 ndc = (v_ClipSpace.xy / v_ClipSpace.w) / 2.0 + 0.5;
 
@@ -605,7 +654,7 @@
             vec2 dudvTexCoordRefract = (texture2D(
                 u_TextureDudv0,
                 vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t)
-            ).rg * 2.0 - 1.0) * 0.2;
+            ).rg * 2.0 - 1.0) * 0.02;
 
             vec2 dudvTexCoordReflect = (texture2D(
                 u_TextureDudv0,
@@ -615,10 +664,12 @@
             refractionTexCoords += dudvTexCoordRefract;
             reflectionTexCoords += dudvTexCoordReflect;
 
+            //return texture2D(u_Texture0, vec2(ndc.x, ndc.y));
+
             return mix(
                 texture2D(u_Texture0, refractionTexCoords),
                 texture2D(u_Texture1, reflectionTexCoords),
-                0.5
+                0.8
             );
         }
 
@@ -654,7 +705,7 @@
 
 </head>
     <body>
-        <div id="debug"></div>
+        <div id="debug" style="display:none"></div>
 
 
         <div id="topRight">
