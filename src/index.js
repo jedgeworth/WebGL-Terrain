@@ -106,8 +106,10 @@ document.addEventListener("DOMContentLoaded", () => {
         edgeGl.prepareObjects = (gl) => {
 
             const camera = new Camera();
-            camera.setPosition(-478, 986, -866);
-            camera.setRotation(32, -140);
+            // camera.setPosition(-478, 986, -866);
+            // camera.setRotation(32, -140);
+            camera.setPosition(1750.28, 149, 1281.19);
+            camera.setRotation(5, -2);
             edgeGl.setCamera(camera);
 
             //
@@ -156,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const fboRefractionTexture = new FBOTexture(gl, edgeGl.textures.water);
             fboRefractionTexture.init(1024, 1024);
             fboRefractionTexture.shaderUniforms = {
-                clipPlane: [0, -1, 0, 100]
+                clipPlane: [0, -1, 0, edgeGl.waterSettings.level]
             };
             edgeGl.registerFboTexture("fboRefraction", fboRefractionTexture);
 
@@ -167,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 yOffset: 0,
             };
             fboReflectionTexture.shaderUniforms = {
-                clipPlane: [0, 1, 0, 100]
+                clipPlane: [0, 1, 0, -edgeGl.waterSettings.level]
             };
             edgeGl.registerFboTexture("fboReflection", fboReflectionTexture);
 
@@ -200,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
             floorObject.setTexture(edgeGl.textures.fboRefraction);
             floorObject.setPosition(100, 100, 1);
 
-           // edgeGl.registerSceneObject('floor', floorObject, 'minimal', 'ortho');
+            //edgeGl.registerSceneObject('floor', floorObject, 'minimal', 'ortho');
 
             //
             const floorObject2 = new SceneObject(gl);
@@ -431,6 +433,13 @@ function bindWebUI(gl, edgeGl) {
 
     document.querySelector('input[class="waterLevel"]').addEventListener('change', (event) => {
         edgeGl.waterSettings.level = parseInt(document.getElementById('waterLevel').value);
+        edgeGl.frameBuffers.fboReflection.shaderUniforms = {
+            clipPlane: [0, 1, 0, -edgeGl.waterSettings.level]
+        };
+
+        edgeGl.frameBuffers.fboRefraction.shaderUniforms = {
+            clipPlane: [0, -1, 0, edgeGl.waterSettings.level]
+        };
     });
 
     document.querySelector('input[class="waterOffset"]').addEventListener('change', (event) => {
@@ -458,5 +467,21 @@ function bindWebUI(gl, edgeGl) {
             terrain.populateNormalDebugSceneObject(edgeGl.sceneObjects.terrainNormalDebug);
         });
 
+    };
+
+    let uiVisible = true;
+
+    document.getElementById('toggleUI').onclick = () => {
+
+        if (uiVisible) {
+            document.getElementById('topRight').style.display = 'none';
+            document.getElementById('bottomRight').style.display = 'none';
+        } else {
+            document.getElementById('topRight').style.display = 'block';
+            document.getElementById('bottomRight').style.display = 'block';
+        }
+
+
+        uiVisible = !uiVisible;
     };
 }

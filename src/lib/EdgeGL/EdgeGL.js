@@ -431,16 +431,7 @@ module.exports = class EdgeGL{
 
         this.camera.setPerspective();
 
-
-
-        // Refraction texture
-        //this.camera.update();
-
-        // Reflection texture (flip texcoord y in shader)
-        //this.camera.update(true, this.waterSettings.offset);
-
         this.sceneObjects.water.setPosition(1024, this.waterSettings.level, 1024);
-
 
         Object.entries(this.renderQueue).forEach(([targetBuffer, objects]) => {
 
@@ -448,7 +439,7 @@ module.exports = class EdgeGL{
                 const cameraParams = this.frameBuffers[targetBuffer].cameraParams;
 
                 if (cameraParams !== null) {
-                    this.camera.update(cameraParams.reflect, this.waterSettings.level);
+                    this.camera.update(cameraParams.reflect, -this.waterSettings.level*2.2);
 
                     if (this.sky) {
                         this.sky.update(cameraParams.reflect);

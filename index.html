@@ -94,6 +94,17 @@
         #cameraDebug{
             margin-top:1rem;
         }
+
+        #toggleUI {
+            display:inline-block;
+            width:20px;
+            height:20px;
+            background:none;
+            border:none;
+            cursor:pointer;
+
+        }
+
     </style>
 
     <script id="base-vs" type="x-shader/x-vertex">
@@ -659,12 +670,17 @@
             vec2 dudvTexCoordReflect = (texture2D(
                 u_TextureDudv0,
                 vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t + u_WaterMovement)
-            ).rg * 2.0 - 1.0) * 0.2;
+            ).rg * 2.0 - 1.0) * 0.02;
 
             refractionTexCoords += dudvTexCoordRefract;
             reflectionTexCoords += dudvTexCoordReflect;
 
-            //return texture2D(u_Texture0, vec2(ndc.x, ndc.y));
+            refractionTexCoords.x = clamp(refractionTexCoords.x, 0.001, 0.999);
+            refractionTexCoords.y = clamp(refractionTexCoords.y, -0.999, -0.001);
+            reflectionTexCoords.x = clamp(reflectionTexCoords.x, 0.001, 0.999);
+            reflectionTexCoords.y = clamp(reflectionTexCoords.y, -0.999, -0.001);
+
+            //return texture2D(u_Texture1, vec2(ndc.x, -ndc.y));
 
             return mix(
                 texture2D(u_Texture0, refractionTexCoords),
@@ -859,6 +875,7 @@
 
         <div id="bottomLeft">
             WebGL Demo by <a href="https://jamesedgeworth.com">James Edgeworth</a>
+            <button id="toggleUI"></button>
         </div>
 
         <canvas id="glcanvas" style="width:100%; height:100%">
