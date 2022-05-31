@@ -35,11 +35,10 @@
         if (appRegistry.delta) {
             this.waterMovement += appRegistry.delta * 0.00003;
             this.waterMovement %=1;
-
-            //console.log(this.waterMovement);
         }
 
         this.shaderProgram.setUniform1f('u_WaterMovement', this.waterMovement);
+        this.shaderProgram.setUniform1f('u_UseDudvMap', 1);
 
         super.render(appRegistry, true);
      }

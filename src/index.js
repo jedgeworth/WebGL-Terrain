@@ -69,7 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 'waterDeep' : require('./assets/img/water_deep.png'),
 
                 'water' : require('./assets/img/blank.png'),
-                'water_dudv' : require('./assets/img/dudv.png'),
+                'water_dudv' : require('./assets/img/water_dudv.png'),
+                'water_n' : require('./assets/img/water_n.jpg'),
             });
 
             edgeGl.registerShaders({
