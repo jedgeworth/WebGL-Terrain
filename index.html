@@ -112,6 +112,7 @@
         precision mediump int;
 
         attribute vec3 a_VertexNormal;
+        attribute vec4 a_VertexColor;
         attribute vec3 a_VertexPosition;
         attribute vec2 a_TextureCoord;
 
@@ -142,6 +143,7 @@
         varying vec4 v_VertexEyePosition;
         varying vec2 v_TextureCoord;
         varying vec3 v_VertexNormal;
+        varying vec4 v_VertexColor;
 
         varying vec3 v_EyeVector;
         varying vec3 v_LightVectors[2];
@@ -174,6 +176,7 @@
 
             v_TextureCoord = a_TextureCoord;
             v_VertexEyePosition =  v4VertexPosition;
+            v_VertexColor = a_VertexColor;
 
             gl_PointSize = 2.0;
             gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * v4VertexPosition;
@@ -190,6 +193,11 @@
         uniform sampler2D u_Texture1;
         uniform sampler2D u_TextureNormal1;
 
+        uniform sampler2D u_Texture2;
+        uniform sampler2D u_TextureNormal2;
+
+        uniform bool u_UseMultiTexturing;
+
         uniform bool u_UseClipPlane;
         uniform vec4 u_ClipPlane;
 
@@ -197,6 +205,7 @@
         varying vec4 v_VertexEyePosition;
         varying vec2 v_TextureCoord;
         varying vec3 v_VertexNormal;
+        varying vec4 v_VertexColor;
 
         varying vec3 v_EyeVector;
         varying vec3 v_RawNormal;
@@ -300,6 +309,7 @@
         ////////////////////////////////////////////////////////////////////////
 
         void main(void) {
+            vec4 finalColor;
 
             if (u_UseClipPlane) {
                 if ( dot(v_VertexEyePosition, u_ClipPlane) <  -0.1 ) {
@@ -307,7 +317,23 @@
                 }
             }
 
-            vec4 finalColor = texture2D(u_Texture0, v_TextureCoord);
+            if (u_UseMultiTexturing) {
+
+                vec4 texel0, texel1, texel2;
+
+                texel0 = texture2D(u_Texture0, v_TextureCoord);
+                texel1 = texture2D(u_Texture1, v_TextureCoord);
+                texel2 = texture2D(u_Texture2, v_TextureCoord);
+
+                finalColor = texel0 * v_VertexColor.r;
+                finalColor += texel1 * v_VertexColor.g;
+                finalColor += texel2 * v_VertexColor.b;
+
+            } else {
+                finalColor = texture2D(u_Texture0, v_TextureCoord);
+            }
+
+
 
             if (u_UseLighting) {
                 finalColor *= (
@@ -328,6 +354,8 @@
             //finalColor.r = v_VertexNormal.x * 0.5 + 1.0;
             //finalColor.g = v_VertexNormal.y * 0.5 + 1.0;
             //finalColor.b = v_VertexNormal.z * 0.5 + 1.0;
+
+            //finalColor = v_VertexColor;
 
             gl_FragColor = finalColor;
         }
@@ -538,25 +566,24 @@
             vec2 dudvTexCoordRefract = (texture2D(
                 u_TextureDudv0,
                 vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t)
-            ).rg * 2.0 - 1.0) * 0.02;
+            ).rg * 2.0 - 1.0) * 0.01;
 
             vec2 dudvTexCoordReflect = (texture2D(
                 u_TextureDudv0,
                 vec2(v_TextureCoord.s + u_WaterMovement, v_TextureCoord.t + u_WaterMovement)
-            ).rg * 2.0 - 1.0) * 0.02;
+            ).rg * 2.0 - 1.0) * 0.01;
 
             refractionTexCoords += dudvTexCoordRefract;
             reflectionTexCoords += dudvTexCoordReflect;
 
-            refractionTexCoords.x = clamp(refractionTexCoords.x, 0.001, 0.999);
-            refractionTexCoords.y = clamp(refractionTexCoords.y, -0.999, -0.001);
+            refractionTexCoords = clamp(refractionTexCoords, 0.001, 0.999);
             reflectionTexCoords.x = clamp(reflectionTexCoords.x, 0.001, 0.999);
             reflectionTexCoords.y = clamp(reflectionTexCoords.y, -0.999, -0.001);
 
             return mix(
                 texture2D(u_Texture0, refractionTexCoords),
                 texture2D(u_Texture1, reflectionTexCoords),
-                0.8
+                0.5
             );
         }
 
@@ -565,18 +592,18 @@
         void main(void) {
             vec4 finalColor;
 
-            if (u_UseDudvMap) {
+            //if (u_UseDudvMap) {
                 finalColor += dudvTexturing();
-            } else {
-                finalColor = texture2D(u_Texture0, v_TextureCoord);
-            }
+            //} else {
+                //finalColor = texture2D(u_Texture0, v_TextureCoord);
+            //}
 
 
             if (u_UseLighting) {
-                finalColor *= (
-                    lighting(u_Lights[0], v_LightVectors[0]) +
-                    lighting(u_Lights[1], v_LightVectors[1])
-                );
+                //finalColor *= (
+                    //lighting(u_Lights[0], v_LightVectors[0]) +
+                    //lighting(u_Lights[1], v_LightVectors[1])
+                //);
             }
 
             if (u_UseFog) {
@@ -708,7 +735,7 @@
 
 </head>
     <body>
-        <div id="debug" style="display:none"></div>
+        <div id="debug"></div>
 
 
         <div id="topRight">
@@ -730,8 +757,8 @@
             <label>
                 Type<br>
                 <select class="sunType" id="sunType" name="sunType">
-                    <option value="0">Directional</option>
-                    <option value="1" selected>Point light</option>
+                    <option value="0" selected>Directional</option>
+                    <option value="1">Point light</option>
                     <option value="2">Spot light</option>
                 </select>
             </label>

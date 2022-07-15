@@ -16,20 +16,24 @@ module.exports = class Terrain {
     constructor() {
         this.width = 0;
         this.height = 0;
-        this.lowValue = 0;
-        this.highValue = 0;
 
         this.heightmap = null;
         this.sceneObject = null;
         this.xMax = 0;
         this.zMax = 0;
 
-        this.stretch = 4;
+        this.stretch = 1;
         this.textureTiling = 128.0;
         this.centralize = false;
 
         this.verts = []; // Vector12
         this.indices = [];
+
+        this.textureBands = [
+            {min: 0.0, max: 100.0},
+            {min: 100.0, max: 150.0},
+            {min: 150.0, max: 200.0},
+        ];
     }
 
     /**
@@ -70,6 +74,7 @@ module.exports = class Terrain {
         this.createNormals();
     }
 
+
     /**
      * Loads vertices from heightmap data.
      */
@@ -90,11 +95,11 @@ module.exports = class Terrain {
                 vert.z = z * this.stretch;
 
                 // Colour
-                const normalizedColor = normalize(y, this.lowValue, this.highValue);
+                //const normalizedColor = normalize(y, this.lowValue, this.highValue);
 
-                vert.r = normalizedColor;
-                vert.g = normalizedColor;
-                vert.b = normalizedColor;
+                vert.r = this.textureFactor(this.textureBands[0].max, vert.y);
+                vert.g = this.textureFactor(this.textureBands[1].max, vert.y);
+                vert.b = this.textureFactor(this.textureBands[2].max, vert.y);
                 vert.a = 1.0;
 
                 // Texcoords
@@ -104,6 +109,18 @@ module.exports = class Terrain {
                 this.verts[(x * this.heightmap.width) + z] = vert;
             }
         }
+    }
+
+    /**
+     * Helper function for creating the blend map.
+     */
+    textureFactor(bandMax, height) {
+        let factor = (50.0 - Math.abs(bandMax - height)) / 50.0;
+
+        if (factor < 0.0) factor = 0.0;
+        if (factor > 1.0) factor = 1.0;
+
+        return factor;
     }
 
     /**

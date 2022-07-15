@@ -60,6 +60,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 'rock' : require('./assets/img/rocks.png'),
                 'rock_n' : require('./assets/img/rocks_N.png'),
 
+                'rockBoulderDry' : require('./assets/img/rock_boulder_dry.jpg'),
+                'rockBoulderDry_n' : require('./assets/img/rock_boulder_dry_n.jpg'),
+
+                'coastSand' : require('./assets/img/coast_sand_04.jpg'),
+                'coastSand_n' : require('./assets/img/coast_sand_04_n.jpg'),
+
+                'coastSandRocks' : require('./assets/img/coast_sand_rocks_02.jpg'),
+                'coastSandRocks_n' : require('./assets/img/coast_sand_rocks_02_n.jpg'),
+
                 '243' : require('./assets/img/243.png'),
                 '243_n' : require('./assets/img/243_n.png'),
 
@@ -84,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Load Heightmap
             const heightmap = new Heightmap();
 
-            // heightmap.initWithFaultLine(256, 256, 0, () => {
+            // heightmap.initWithFaultLine(512, 512, 1000, () => {
             //     edgeGl.heightmaps.main = heightmap;
             //     edgeGl.assetFlags.modelsLoaded = true;
 
@@ -119,12 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
             edgeGl.setKeyboardHandler(keyboardHandler);
 
             const sunLight = new Light(gl, "0");
-            sunLight.setType(1);
+            sunLight.setType(0);
             sunLight.setDirection(1.0, -1.0, 1.0);
             sunLight.setAmbient(0.3, 0.3, 0.1);
             sunLight.setDiffuse(0.7, 0.7, 0.7);
             sunLight.setSpecular(0.2, 0.2, 0.2);
-            sunLight.setPosition(1, 1, 1);
+            sunLight.setPosition(1, -1, 1);
             edgeGl.setLight('0', sunLight);
 
             const blueLight = new Light(gl, "1");
@@ -197,46 +206,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             //
+            const fboTestObject = new SceneObject(gl);
+
+            fboTestObject.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
+            fboTestObject.setTexture(edgeGl.textures.fboRefraction);
+            fboTestObject.setPosition(100, 100, 1);
+
+            edgeGl.registerSceneObject('fbotest', fboTestObject, 'minimal', 'ortho');
+
+
+            const fboTestObject2 = new SceneObject(gl);
+
+            fboTestObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
+            //fboTestObject2.setTexture(edgeGl.textures['243']);
+            fboTestObject2.setTexture(edgeGl.textures.fboReflection);
+            fboTestObject2.setPosition(300, 100, 1);
+
+            edgeGl.registerSceneObject('fbotest2', fboTestObject2, 'minimal', 'ortho');
+
+
+            //
             const floorObject = new SceneObject(gl);
 
-            floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
-            floorObject.setTexture(edgeGl.textures.fboRefraction);
-            floorObject.setPosition(100, 100, 1);
+            floorObject.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+            floorObject.setTexture(edgeGl.textures['243']);
+            floorObject.setPosition(0, 0, -100);
 
-            //edgeGl.registerSceneObject('floor', floorObject, 'minimal', 'ortho');
+            edgeGl.registerSceneObject('floor1', floorObject, 'base', 'static');
+            edgeGl.registerSceneObject('floor1', floorObject, 'base', 'static', 'fboRefraction');
+            edgeGl.registerSceneObject('floor1', floorObject, 'base', 'static', 'fboReflection');
 
             //
             const floorObject2 = new SceneObject(gl);
 
-            floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, true));
-            //floorObject2.setTexture(edgeGl.textures['243']);
-            floorObject2.setTexture(edgeGl.textures.fboReflection);
-            floorObject2.setPosition(300, 100, 1);
+            floorObject2.setPrimitive(new QuadPlanePrimitive(gl, 100, false));
+            floorObject2.setTexture(edgeGl.textures.rock);
+            floorObject2.setPosition(200, 0, -100);
 
-            //edgeGl.registerSceneObject('floor2', floorObject2, 'minimal', 'ortho');
-
-            //
-            const sphereObject = new SceneObject(gl);
-
-            sphereObject.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
-            sphereObject.setTexture(edgeGl.textures.rock);
-            sphereObject.setPosition(0, 100, -200);
-            sphereObject.roll = 90.0;
-
-            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static');
-            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboRefraction');
-            edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboReflection');
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static');
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboRefraction');
+            edgeGl.registerSceneObject('floor2', floorObject2, 'base', 'static', 'fboReflection');
 
             //
-            const sphereObject2 = new SceneObject(gl);
+            // const sphereObject = new SceneObject(gl);
 
-            sphereObject2.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
-            sphereObject2.setTexture(edgeGl.textures['243']);
-            sphereObject2.setPosition(200, 100, -200);
+            // sphereObject.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+            // sphereObject.setTexture(edgeGl.textures['243']);
+            // sphereObject.setPosition(0, 100, -200);
+            // sphereObject.roll = 90.0;
 
-            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
-            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboRefraction');
-            edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboReflection');
+            // edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static');
+            // edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboRefraction');
+            // edgeGl.registerSceneObject('sphere', sphereObject, 'base', 'static', 'fboReflection');
+
+            //
+            // const sphereObject2 = new SceneObject(gl);
+
+            // sphereObject2.setPrimitive(new SpherePrimitive(gl, 50.0, 16, 33));
+            // sphereObject2.setTexture(edgeGl.textures.rock);
+            // sphereObject2.setPosition(200, 100, -200);
+
+            // edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static');
+            // edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboRefraction');
+            // edgeGl.registerSceneObject('sphere2', sphereObject2, 'base', 'static', 'fboReflection');
 
             //
             const terrain = new Terrain();
@@ -247,7 +279,10 @@ document.addEventListener("DOMContentLoaded", () => {
             terrain.populateSceneObject(terrainObject);
 
             terrainObject.setRenderMode(gl.TRIANGLE_STRIP);
-            terrainObject.setTexture(edgeGl.textures.grassPurpleFlowers);
+            //terrainObject.setTexture(edgeGl.textures.grass);
+            terrainObject.setTexture(edgeGl.textures.coastSand);
+            terrainObject.setTexture1(edgeGl.textures.coastSandRocks);
+            terrainObject.setTexture2(edgeGl.textures.rockBoulderDry);
             //terrainObject.setPosition(0, -50, 0);
 
             edgeGl.registerSceneObject('terrain', terrainObject, 'base', 'static');

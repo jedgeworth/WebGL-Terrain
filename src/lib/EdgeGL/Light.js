@@ -177,6 +177,7 @@ module.exports = class Light {
         this.sceneObject = sceneObject;
 
         this.sceneObject.setPositionVector(this.position);
+        this.sceneObject.setDirectionVector(this.position);
 
     }
 

@@ -431,7 +431,7 @@ module.exports = class EdgeGL{
 
         this.camera.setPerspective();
 
-        this.sceneObjects.water.setPosition(1024, this.waterSettings.level, 1024);
+        //this.sceneObjects.water.setPosition(1024, this.waterSettings.level, 1024);
 
         Object.entries(this.renderQueue).forEach(([targetBuffer, objects]) => {
 

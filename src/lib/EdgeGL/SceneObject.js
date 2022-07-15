@@ -100,6 +100,10 @@
         this.direction.z = z;
     }
 
+    setDirectionVector(direction) {
+        this.direction = direction;
+    }
+
     addSceneObject(sceneObject) {
         sceneObject.parentSceneObject = this;
         this.sceneObjects.push(sceneObject);
@@ -191,6 +195,19 @@
         }
 
         this.texture1 = texture1;
+    }
+
+    /**
+     * Set the texture object.
+     * @param {*} texture GL_TEXTURE_2D object.
+     */
+     setTexture2(texture2) {
+
+        if (texture2 === undefined) {
+            throw "SceneObject: Trying to set a texture that is undefined.";
+        }
+
+        this.texture2 = texture2;
     }
 
     /**
@@ -361,7 +378,6 @@
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture0.glTextureDUDV);
 
                     this.shaderProgram.setUniform1i("u_TextureDudv0", 2);
-
                 }
             }
 
@@ -370,7 +386,54 @@
                 this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture1.glTexture);
 
                 this.shaderProgram.setUniform1i("u_Texture1", 3);
+                this.shaderProgram.setUniform1i("u_UseMultiTexturing", 1);
+
+                if (this.texture1.glTextureNormal) {
+                    this.gl.activeTexture(this.gl.TEXTURE4);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture1.glTextureNormal);
+
+                    this.shaderProgram.setUniform1i("u_TextureNormal1", 4);
+                    this.shaderProgram.setUniform1i("u_UseNormalMapping", 1);
+                } else {
+                    this.shaderProgram.setUniform1i("u_UseNormalMapping", 0);
+                }
+
+                if (this.texture1.glTextureDUDV) {
+                    this.gl.activeTexture(this.gl.TEXTURE5);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture1.glTextureDUDV);
+
+                    this.shaderProgram.setUniform1i("u_TextureDudv1", 5);
+                }
+            } else {
+                this.shaderProgram.setUniform1i("u_UseMultiTexturing", 0);
             }
+
+            // if (this.texture2) {
+            //     this.gl.activeTexture(this.gl.TEXTURE4);
+            //     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture2.glTexture);
+
+            //     this.shaderProgram.setUniform1i("u_Texture2", 4);
+            //     this.shaderProgram.setUniform1i("u_UseMultiTexturing", 1);
+
+            //     if (this.texture2.glTextureNormal) {
+            //         this.gl.activeTexture(this.gl.TEXTURE5);
+            //         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture2.glTextureNormal);
+
+            //         this.shaderProgram.setUniform1i("u_TextureNormal2", 5);
+            //         this.shaderProgram.setUniform1i("u_UseNormalMapping", 1);
+            //     } else {
+            //         this.shaderProgram.setUniform1i("u_UseNormalMapping", 0);
+            //     }
+
+            //     if (this.texture2.glTextureDUDV) {
+            //         this.gl.activeTexture(this.gl.TEXTURE6);
+            //         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture2.glTextureDUDV);
+
+            //         this.shaderProgram.setUniform1i("u_TextureDudv2", 6);
+            //     }
+            // } else {
+            //     this.shaderProgram.setUniform1i("u_UseMultiTexturing", 0);
+            // }
 
 
             this.gl.enableVertexAttribArray(this.shaderProgram.textureCoordAttribute);
